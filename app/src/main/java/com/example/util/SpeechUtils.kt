@@ -12,7 +12,8 @@ class PahadiTtsManager(context: Context) : TextToSpeech.OnInitListener {
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
-            val result = tts.setLanguage(Locale("hi", "IN"))
+            val hindiLocale = Locale.Builder().setLanguage("hi").setRegion("IN").build()
+            val result = tts.setLanguage(hindiLocale)
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 tts.language = Locale.ENGLISH
             }

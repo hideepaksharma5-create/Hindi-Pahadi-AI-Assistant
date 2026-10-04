@@ -11,10 +11,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,9 +34,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.ui.components.HimalayanHeader
+import com.example.ui.screens.GeminiChatScreen
 import com.example.ui.screens.HeritageScreen
 import com.example.ui.screens.HimachalKnowledgeScreen
-import com.example.ui.screens.PahadiMitraScreen
 import com.example.ui.screens.SavedScreen
 import com.example.ui.screens.TranslatorScreen
 import com.example.ui.theme.MyApplicationTheme
@@ -48,10 +48,10 @@ enum class PahadiNavTab(
     val icon: ImageVector,
     val testTag: String
 ) {
+    GEMINI_CHAT(R.string.tab_assistant, "Gemini AI", Icons.AutoMirrored.Filled.Chat, "nav_gemini_chat"),
     TRANSLATE(R.string.tab_translate, "अनुवाद", Icons.Default.Translate, "nav_translate"),
-    VOICE_AI(R.string.tab_assistant, "पहाड़ी AI", Icons.Default.Mic, "nav_mitra"),
     HIMACHAL(R.string.tab_knowledge, "स्थानिक ज्ञान", Icons.Default.Info, "nav_himachal"),
-    HERITAGE(R.string.tab_phrasebook, "धरोहर", Icons.Default.MenuBook, "nav_heritage"),
+    HERITAGE(R.string.tab_phrasebook, "धरोहर", Icons.AutoMirrored.Filled.MenuBook, "nav_heritage"),
     SAVED(R.string.tab_saved, "सहेजे गए", Icons.Default.Bookmark, "nav_saved")
 }
 
@@ -126,11 +126,11 @@ fun PahadiAppRoot(viewModel: PahadiViewModel) {
                 .background(MaterialTheme.colorScheme.background)
         ) {
             when (selectedTabIndex) {
-                0 -> TranslatorScreen(
+                0 -> GeminiChatScreen(
                     viewModel = viewModel,
                     modifier = Modifier.fillMaxSize()
                 )
-                1 -> PahadiMitraScreen(
+                1 -> TranslatorScreen(
                     viewModel = viewModel,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -138,7 +138,7 @@ fun PahadiAppRoot(viewModel: PahadiViewModel) {
                     viewModel = viewModel,
                     onAskInChat = { question ->
                         viewModel.setChatInput(question)
-                        selectedTabIndex = 1
+                        selectedTabIndex = 0
                         viewModel.sendChatMessage(question)
                     },
                     modifier = Modifier.fillMaxSize()
@@ -148,12 +148,12 @@ fun PahadiAppRoot(viewModel: PahadiViewModel) {
                     onNavigateToTranslator = { text, dialect ->
                         viewModel.setInputText(text)
                         viewModel.setTargetDialect(dialect)
-                        selectedTabIndex = 0
+                        selectedTabIndex = 1
                         viewModel.translateNow()
                     },
                     onAskInChat = { question ->
                         viewModel.setChatInput(question)
-                        selectedTabIndex = 1
+                        selectedTabIndex = 0
                         viewModel.sendChatMessage(question)
                     },
                     modifier = Modifier.fillMaxSize()

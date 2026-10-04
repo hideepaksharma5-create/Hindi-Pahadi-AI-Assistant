@@ -118,9 +118,20 @@ object GeminiClient {
             val firstCandidate = candidates?.optJSONObject(0)
             val content = firstCandidate?.optJSONObject("content")
             val parts = content?.optJSONArray("parts")
-            val rawText = parts?.optJSONObject(0)?.optString("text", "") ?: ""
+            val rawTextBuilder = java.lang.StringBuilder()
+            if (parts != null) {
+                for (i in 0 until parts.length()) {
+                    rawTextBuilder.append(parts.optJSONObject(i)?.optString("text", "") ?: "")
+                }
+            }
+            val rawText = rawTextBuilder.toString()
+            val cleanJson = rawText.trim()
+                .removePrefix("```json")
+                .removePrefix("```")
+                .removeSuffix("```")
+                .trim()
 
-            val parsed = JSONObject(rawText)
+            val parsed = JSONObject(cleanJson)
             val result = TranslationResult(
                 sourceText = sourceText,
                 sourceLanguage = if (isPahadiToHindi) "${targetDialect.displayNameHindi} (पहाड़ी)" else sourceLang,
@@ -222,11 +233,6 @@ object GeminiClient {
 
             val rootJson = JSONObject().apply {
                 put("contents", contentsArray)
-                put("tools", JSONArray().apply {
-                    put(JSONObject().apply {
-                        put("googleSearch", JSONObject())
-                    })
-                })
                 put("systemInstruction", JSONObject().apply {
                     put("parts", JSONArray().apply {
                         put(JSONObject().apply { put("text", systemInstruction) })
@@ -255,7 +261,13 @@ object GeminiClient {
             val candidates = respJson.optJSONArray("candidates")
             val candidate = candidates?.optJSONObject(0)
             val parts = candidate?.optJSONObject("content")?.optJSONArray("parts")
-            val text = parts?.optJSONObject(0)?.optString("text", "") ?: ""
+            val textBuilder = java.lang.StringBuilder()
+            if (parts != null) {
+                for (i in 0 until parts.length()) {
+                    textBuilder.append(parts.optJSONObject(i)?.optString("text", "") ?: "")
+                }
+            }
+            val text = textBuilder.toString()
 
             Result.success(text)
         } catch (e: Exception) {

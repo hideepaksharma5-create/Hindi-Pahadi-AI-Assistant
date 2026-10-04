@@ -52,7 +52,7 @@ fun ChatMessageEntity.toChatMessage(): com.example.data.model.ChatMessage {
     }
     val dialect = relatedDialectCode?.let { com.example.data.model.PahadiDialect.fromCode(it) }
     return com.example.data.model.ChatMessage(
-        id = clientMessageId.ifEmpty { id.toString() },
+        id = if (id > 0) "db_msg_${id}" else clientMessageId.ifEmpty { "msg_${timestamp}_${text.hashCode()}" },
         text = text,
         isUser = isUser,
         timestamp = timestamp,
