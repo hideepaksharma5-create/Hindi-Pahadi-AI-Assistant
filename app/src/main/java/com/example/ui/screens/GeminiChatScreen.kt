@@ -188,14 +188,14 @@ fun GeminiChatScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .testTag("gemini_chat_screen")
         ) {
-            // Top Model Status & Dialect Selection Header
+            // Top Model Status & Controls Header
             Surface(
                 tonalElevation = 2.dp,
                 color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(vertical = 6.dp)) {
-                    // Row 1: Gemini AI Model badge & Dialect Selector
+                Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                    // Row 1: Gemini AI Model badge & Quick actions
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -222,34 +222,61 @@ fun GeminiChatScreen(
                                     imageVector = Icons.Default.AutoAwesome,
                                     contentDescription = null,
                                     tint = SaffronHimalaya,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(15.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = if (viewModel.isGeminiAvailable) "Gemini 2.5 Flash • ऑनलाइन" else "Gemini AI • ऑफ़लाइन मोड",
                                     style = MaterialTheme.typography.labelMedium.copy(
                                         fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
                                         color = if (viewModel.isGeminiAvailable) Color(0xFF047857) else SaffronHimalaya
                                     )
                                 )
                             }
                         }
 
-                        // Dialect dropdown
-                        PahadiDialectDropdown(
-                            selectedDialect = activeDialect,
-                            onDialectSelected = { viewModel.setTargetDialect(it) },
-                            compact = true
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .clickable { showCulturalQaSheet = true }
+                            ) {
+                                Text(
+                                    text = "🏛️ सत्र (${culturalQaSessions.size})",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp),
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(6.dp))
+
+                            IconButton(
+                                onClick = { showClearConfirm = true },
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .testTag("clear_chat_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.DeleteSweep,
+                                    contentDescription = "Clear Chat",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
                     }
 
-                    // Row 2: Mode Selector Pills (Scrollable)
+                    // Row 2: Mode Selector Pills & Voice Quick Toggles (Scrollable)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState())
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            .padding(horizontal = 12.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         AppMode.entries.forEach { mode ->
                             val isSelected = currentMode == mode
@@ -265,105 +292,57 @@ fun GeminiChatScreen(
                                             AppMode.STANDARD -> Icons.Default.SmartToy
                                         },
                                         contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(15.dp)
                                     )
                                 },
                                 label = {
                                     Text(
                                         mode.titleHindi,
-                                        fontSize = 12.sp,
+                                        fontSize = 11.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                     )
                                 }
                             )
                         }
-                    }
 
-                    // Row 3: Controls sub-bar (Voice gender, Auto-speak, Room status, Clear)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 2.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                modifier = Modifier.clickable { viewModel.toggleVoiceGender() }
-                            ) {
-                                Text(
-                                    text = if (voiceGender == VoiceGender.FEMALE) "आवाज़: महिला 👩" else "आवाज़: पुरुष 👨",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(6.dp))
-
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = if (autoSpeak) Color(0xFF10B981).copy(alpha = 0.2f) else Color.Gray.copy(alpha = 0.2f),
-                                modifier = Modifier.clickable { viewModel.toggleAutoSpeak() }
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = if (autoSpeak) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(14.dp),
-                                        tint = if (autoSpeak) Color(0xFF047857) else Color.DarkGray
-                                    )
-                                    Spacer(modifier = Modifier.width(3.dp))
-                                    Text(
-                                        text = if (autoSpeak) "आवाज ऑन" else "म्यूट",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.width(6.dp))
-
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .clickable { showCulturalQaSheet = true }
-                            ) {
-                                Text(
-                                    text = "🏛️ सत्र (${culturalQaSessions.size})",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
-                                )
-                            }
+                        // Voice Gender Toggle
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { viewModel.toggleVoiceGender() }
+                        ) {
+                            Text(
+                                text = if (voiceGender == VoiceGender.FEMALE) "महिला 👩" else "पुरुष 👨",
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold, fontSize = 11.sp),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                            )
                         }
 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "💾 Room सुरक्षित",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    color = Color(0xFF047857),
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 11.sp
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            IconButton(
-                                onClick = { showClearConfirm = true },
-                                modifier = Modifier
-                                    .size(26.dp)
-                                    .testTag("clear_chat_button")
+                        // Auto Speak Toggle
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (autoSpeak) Color(0xFF10B981).copy(alpha = 0.2f) else Color.Gray.copy(alpha = 0.2f),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { viewModel.toggleAutoSpeak() }
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.DeleteSweep,
-                                    contentDescription = "Clear Chat",
-                                    tint = Color.Gray,
-                                    modifier = Modifier.size(18.dp)
+                                    imageVector = if (autoSpeak) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = if (autoSpeak) Color(0xFF047857) else Color.DarkGray
+                                )
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Text(
+                                    text = if (autoSpeak) "ध्वनि चालू" else "म्यूट",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
