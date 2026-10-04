@@ -587,7 +587,7 @@ fun GeminiChatScreen(
                 text = {
                     Column {
                         Text(
-                            text = "यह ऐप Google Gemini AI (gemini-2.5-flash) मॉडल का उपयोग करता है, जिससे आप हिमाचली व गढ़वाली-कुमाऊँनी बोलियों में सहज बातचीत कर सकते हैं।",
+                            text = "यह ऐप Google Gemini AI (gemini-3.8-flash) मॉडल का उपयोग करता है, जिससे आप हिमाचली व गढ़वाली-कुमाऊँनी बोलियों में सहज बातचीत कर सकते हैं।",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(10.dp))
