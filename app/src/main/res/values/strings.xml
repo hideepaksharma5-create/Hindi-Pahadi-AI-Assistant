@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Pahadi AI</string>
+    <string name="tagline">Himalayan Dialects &amp; Cultural Guide</string>
+    <string name="tab_translate">Translate</string>
+    <string name="tab_assistant">Pahadi Mitra</string>
+    <string name="tab_phrasebook">Phrasebook</string>
+    <string name="tab_stories">Folk Lore</string>
+    <string name="tab_knowledge">Himachal</string>
+    <string name="tab_saved">Saved</string>
+</resources>

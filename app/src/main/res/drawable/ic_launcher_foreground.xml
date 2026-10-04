@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Golden Dawn Sun Rising behind peaks -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M54,30a14,14 0 1,0 0.001,0Z" />
+    <path
+        android:fillColor="#FDE68A"
+        android:pathData="M54,34a10,10 0 1,0 0.001,0Z" />
+
+    <!-- Distant Himalayan Ridge -->
+    <path
+        android:fillColor="#475569"
+        android:pathData="M22,78 L38,50 L52,66 L68,44 L86,78 Z" />
+
+    <!-- Forefront Majestic Snow Peak (Center-Left) -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M24,78 L46,38 L68,78 Z" />
+    <!-- Snow Cap on Center-Left Peak -->
+    <path
+        android:fillColor="#F8FAFC"
+        android:pathData="M46,38 L38,52 L44,50 L46,55 L50,49 L54,53 Z" />
+    <!-- Shading on peak -->
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M46,38 L54,53 L50,49 L46,55 Z" />
+
+    <!-- Forefront Majestic Higher Snow Peak (Center-Right) -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M44,78 L64,32 L86,78 Z" />
+    <!-- Snow Cap on Center-Right Peak -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M64,32 L54,48 L61,46 L64,52 L69,45 L74,50 Z" />
+    <!-- Peak highlight -->
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M64,32 L74,50 L69,45 L64,52 Z" />
+
+    <!-- Himalayan AI Sparkle / Conch Symbol in golden glow -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M54,20 L56,25 L61,27 L56,29 L54,34 L52,29 L47,27 L52,25 Z" />
+
+    <!-- Prayer flag cord / curved accent line -->
+    <path
+        android:strokeColor="#F59E0B"
+        android:strokeWidth="1.5"
+        android:pathData="M28,68 Q54,73 80,68" />
+</vector>

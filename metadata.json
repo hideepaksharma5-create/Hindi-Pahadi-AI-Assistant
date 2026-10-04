@@ -1,0 +1,6 @@
+{
+  "name": "Pahadi AI",
+  "description": "AI assistant and translator for Hindi and Himalayan Pahadi dialects with cultural context, pronunciation, and folk traditions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
