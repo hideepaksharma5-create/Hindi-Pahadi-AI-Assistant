@@ -1,0 +1,10 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "kotlin.indexing.enabled": true,
+    "files.exclude": {
+        "**/.git": true,
+        "**/.gradle": true,
+        "**/build": false
+    },
+    "python.defaultInterpreterPath": "python3"
+}
