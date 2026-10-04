@@ -24,6 +24,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -74,6 +75,8 @@ fun PahadiAppRoot(viewModel: PahadiViewModel) {
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
     val tabs = PahadiNavTab.entries
 
+    val currentDialect by viewModel.targetDialect.collectAsState()
+
     BackHandler(enabled = selectedTabIndex != 0) {
         selectedTabIndex = 0
     }
@@ -82,7 +85,9 @@ fun PahadiAppRoot(viewModel: PahadiViewModel) {
         modifier = Modifier.fillMaxSize(),
         topBar = {
             HimalayanHeader(
-                isAiConnected = viewModel.isGeminiAvailable
+                isAiConnected = viewModel.isGeminiAvailable,
+                currentDialect = currentDialect,
+                onDialectSelected = { viewModel.setTargetDialect(it) }
             )
         },
         bottomBar = {

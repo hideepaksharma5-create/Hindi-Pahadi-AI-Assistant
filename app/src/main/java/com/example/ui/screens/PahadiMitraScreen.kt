@@ -76,6 +76,7 @@ import androidx.core.content.ContextCompat
 import com.example.data.model.AppMode
 import com.example.data.model.ChatMessage
 import com.example.data.model.VoiceGender
+import com.example.ui.components.PahadiDialectDropdown
 import com.example.ui.components.SpeechListeningOverlay
 import com.example.ui.theme.SaffronHimalaya
 import com.example.ui.viewmodel.PahadiViewModel
@@ -298,19 +299,12 @@ fun PahadiMitraScreen(
                             }
                         }
 
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = SaffronHimalaya.copy(alpha = 0.15f)
-                        ) {
-                            Text(
-                                text = activeDialect.displayNameHindi.substringBefore(" ("),
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    color = SaffronHimalaya,
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
-                            )
-                        }
+                        // Interactive Dialect Selection Dropdown
+                        PahadiDialectDropdown(
+                            selectedDialect = activeDialect,
+                            onDialectSelected = { viewModel.setTargetDialect(it) },
+                            compact = true
+                        )
                     }
                 }
             }

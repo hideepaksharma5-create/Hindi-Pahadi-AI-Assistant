@@ -44,4 +44,15 @@ class ExampleRobolectricTest {
     assertNotNull(goluStory)
     assertTrue(goluStory!!.fullStory.contains("चितई"))
   }
+
+  @Test
+  fun `verify pahadi to hindi translation`() {
+    val resultPailaag = PahadiOfflineEngine.translatePahadiToHindi("पैलाग", PahadiDialect.KUMAONI)
+    assertNotNull(resultPailaag)
+    assertTrue(resultPailaag.translatedText.contains("प्रणाम") || resultPailaag.translatedText.contains("चरण स्पर्श"))
+
+    val resultHaal = PahadiOfflineEngine.translatePahadiToHindi("तुहाड़े के हाल न?", PahadiDialect.MANDEALI)
+    assertNotNull(resultHaal)
+    assertTrue(resultHaal.translatedText.contains("हाल-चाल") || resultHaal.translatedText.contains("कैसे"))
+  }
 }

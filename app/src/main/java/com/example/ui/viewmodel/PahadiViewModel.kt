@@ -16,6 +16,7 @@ import com.example.data.model.PhraseCategory
 import com.example.data.model.PhraseItem
 import com.example.data.model.ResponseDetail
 import com.example.data.model.SourceLanguage
+import com.example.data.model.TranslationDirection
 import com.example.data.model.TranslationResult
 import com.example.data.model.VoiceGender
 import com.example.data.remote.GeminiClient
@@ -69,6 +70,9 @@ class PahadiViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _targetDialect = MutableStateFlow(PahadiDialect.KANGRI)
     val targetDialect: StateFlow<PahadiDialect> = _targetDialect.asStateFlow()
+
+    private val _translationDirection = MutableStateFlow(TranslationDirection.HINDI_TO_PAHADI)
+    val translationDirection: StateFlow<TranslationDirection> = _translationDirection.asStateFlow()
 
     private val _isTranslating = MutableStateFlow(false)
     val isTranslating: StateFlow<Boolean> = _isTranslating.asStateFlow()
@@ -186,12 +190,36 @@ class PahadiViewModel(application: Application) : AndroidViewModel(application) 
         _sourceLang.value = lang
     }
 
+    fun setTranslationDirection(direction: TranslationDirection) {
+        _translationDirection.value = direction
+        if (direction == TranslationDirection.PAHADI_TO_HINDI) {
+            _sourceLang.value = _targetDialect.value.displayNameHindi
+        } else {
+            _sourceLang.value = SourceLanguage.HINDI.displayName
+        }
+        if (_inputText.value.isNotBlank()) {
+            translateNow()
+        }
+    }
+
     fun swapLanguages() {
-        val currentTarget = _targetDialect.value
+        val nextDirection = if (_translationDirection.value == TranslationDirection.HINDI_TO_PAHADI) {
+            TranslationDirection.PAHADI_TO_HINDI
+        } else {
+            TranslationDirection.HINDI_TO_PAHADI
+        }
         val currentTrans = _currentTranslation.value?.translatedText
-        _sourceLang.value = currentTarget.displayNameHindi
+        _translationDirection.value = nextDirection
+
+        if (nextDirection == TranslationDirection.PAHADI_TO_HINDI) {
+            _sourceLang.value = _targetDialect.value.displayNameHindi
+        } else {
+            _sourceLang.value = SourceLanguage.HINDI.displayName
+        }
+
         if (!currentTrans.isNullOrBlank()) {
             _inputText.value = currentTrans
+            translateNow()
         }
     }
 
@@ -203,10 +231,12 @@ class PahadiViewModel(application: Application) : AndroidViewModel(application) 
             _isTranslating.value = true
             _isCurrentSaved.value = false
             try {
+                val isPahadiToHindi = _translationDirection.value == TranslationDirection.PAHADI_TO_HINDI
                 val result = repository.translate(
                     sourceText = text,
-                    sourceLang = _sourceLang.value,
-                    targetDialect = _targetDialect.value
+                    sourceLang = if (isPahadiToHindi) "${_targetDialect.value.displayNameHindi} (पहाड़ी)" else _sourceLang.value,
+                    targetDialect = _targetDialect.value,
+                    isPahadiToHindi = isPahadiToHindi
                 )
                 _currentTranslation.value = result
 

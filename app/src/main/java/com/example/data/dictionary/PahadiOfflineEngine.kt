@@ -493,4 +493,74 @@ object PahadiOfflineEngine {
             isAiPowered = false
         )
     }
+
+    fun translatePahadiToHindi(pahadiQuery: String, sourceDialect: PahadiDialect): TranslationResult {
+        val q = pahadiQuery.trim().lowercase()
+
+        // 1. Direct reverse lookup in curated phrases
+        val matchedPhrase = curatedPhrases.find {
+            it.dialect == sourceDialect && (
+                it.translation.lowercase().contains(q) ||
+                q.contains(it.translation.lowercase().take(4)) ||
+                it.phonetic.lowercase().contains(q)
+            )
+        } ?: curatedPhrases.find {
+            it.translation.lowercase().contains(q) || q.contains(it.translation.lowercase().take(4))
+        }
+
+        if (matchedPhrase != null) {
+            return TranslationResult(
+                sourceText = pahadiQuery,
+                sourceLanguage = "${sourceDialect.displayNameHindi} (पहाड़ी)",
+                targetDialect = sourceDialect,
+                translatedText = matchedPhrase.hindi,
+                phoneticText = matchedPhrase.english,
+                culturalContext = "पहाड़ी शब्द '${matchedPhrase.translation}' का हिंदी अर्थ: '${matchedPhrase.hindi}'। ${matchedPhrase.culturalNote}",
+                etiquetteTip = "यह ${sourceDialect.displayNameHindi} का आत्मीय व पारम्परिक वाक्य है।",
+                regionalVariation = "${sourceDialect.region} में बोली जाती है",
+                exampleUsage = matchedPhrase.translation,
+                isAiPowered = false
+            )
+        }
+
+        // 2. Dialect Vocabulary Analysis & Hindi Translation
+        val (hindiTranslation, explanation) = when {
+            q.contains("कुथी") || q.contains("कुथू") || q.contains("कुतै") ->
+                Pair("आप कहाँ जा रहे हैं?", "पहाड़ी में 'कुथी / कुथू' का अर्थ 'कहाँ' और 'चले' का अर्थ 'जा रहे हैं' होता है।")
+            q.contains("हाल") || q.contains("किद्दां") || q.contains("कन छौ") || q.contains("कसि छा") ->
+                Pair("आपके क्या हाल-चाल हैं? आप कैसे हैं?", "पहाड़ी में कुशल-क्षेम पूछने का पारंपरिक तरीका।")
+            q.contains("पैलाग") ->
+                Pair("सादर प्रणाम / चरण स्पर्श (बड़ों के प्रति आदर)", "'पैलाग' कुमाऊँनी और गढ़वाली का सबसे पवित्र व आदरणीय अभिवादन है जिसका अर्थ 'पांव लगना / चरण स्पर्श' होता है।")
+            q.contains("जय देव") ->
+                Pair("नमस्कार जी! ईश्वर आपका कल्याण करें।", "कुल्लू, शिमला व मंडी में 'जय देव' देवताओं के प्रति नमन और एक-दूसरे के अभिवादन के लिए बोला जाता है।")
+            q.contains("खाधी") || q.contains("खाणा") || q.contains("खावा") || q.contains("रोटी") ->
+                Pair("क्या आपने खाना खा लिया? / भोजन कर रहे हैं।", "पहाड़ी घरों में आने वाले हर व्यक्ति से सबसे पहले आदरपूर्वक भोजन और चाय के लिए पूछा जाता है।")
+            q.contains("घाम") || q.contains("झड़ी") || q.contains("काल्हे") || q.contains("भोल") ->
+                Pair("मौसम का हाल: कल धूप खिलेगी / पहाड़ में वर्षा हो रही है।", "'घाम' का अर्थ खिली हुई धूप और 'झड़ी' का अर्थ लगातार होने वाली पहाड़ी वर्षा है।")
+            q.contains("भल च") || q.contains("राजी-खुशी") || q.contains("भल-भलाई") || q.contains("ठीक-ठाक") ->
+                Pair("सब कुशल-मंगल है, सब बिल्कुल ठीक-ठाक है।", "पहाड़ी में 'भल' का अर्थ 'अच्छा / मंगलकारी' होता है।")
+            q.contains("दाज्यू") || q.contains("भुलि") || q.contains("ध्याणी") ->
+                Pair("बड़े भाई (दाज्यू) / छोटी बहन (भुलि) / पहाड़ की बेटी (ध्याणी)", "पारिवारिक रिश्तों और सम्मान के सबसे मधुर पहाड़ी शब्द।")
+            q.contains("सिड्डू") || q.contains("मद्रा") || q.contains("धाम") ->
+                Pair("पारंपरिक हिमाचली व्यंजन (सिड्डू / राजमा मद्रा / शाही धाम)", "हिमाचल का प्रसिद्ध पारंपरिक भाप में पका अखरोट भरा सिड्डू व धाम के व्यंजन।")
+            else ->
+                Pair(
+                    "पहाड़ी कथन: \"$pahadiQuery\" — कुशलक्षेम और बातचीत का सौम्य वाक्य।",
+                    "${sourceDialect.displayNameHindi} में बोला गया यह वाक्य पहाड़ी संस्कृति और आत्मीयता को दर्शाता है।"
+                )
+        }
+
+        return TranslationResult(
+            sourceText = pahadiQuery,
+            sourceLanguage = "${sourceDialect.displayNameHindi} (पहाड़ी)",
+            targetDialect = sourceDialect,
+            translatedText = hindiTranslation,
+            phoneticText = "Pahadi to Hindi Translation",
+            culturalContext = explanation,
+            etiquetteTip = "पहाड़ी में संवाद करते समय सौम्यता और स्थानीय आदर का ध्यान रखें।",
+            regionalVariation = sourceDialect.region,
+            exampleUsage = pahadiQuery,
+            isAiPowered = false
+        )
+    }
 }

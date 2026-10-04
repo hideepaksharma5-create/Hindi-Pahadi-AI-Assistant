@@ -39,12 +39,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.model.PahadiDialect
 import com.example.ui.theme.SaffronHimalaya
 
 @Composable
 fun HimalayanHeader(
     modifier: Modifier = Modifier,
-    isAiConnected: Boolean = true
+    isAiConnected: Boolean = true,
+    currentDialect: PahadiDialect? = null,
+    onDialectSelected: ((PahadiDialect) -> Unit)? = null
 ) {
     var showInfoDialog by remember { mutableStateOf(false) }
 
@@ -177,6 +180,15 @@ fun HimalayanHeader(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (currentDialect != null && onDialectSelected != null) {
+                        PahadiDialectDropdown(
+                            selectedDialect = currentDialect,
+                            onDialectSelected = onDialectSelected,
+                            compact = true
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+
                     IconButton(
                         onClick = { showInfoDialog = true },
                         modifier = Modifier.testTag("header_info_button")

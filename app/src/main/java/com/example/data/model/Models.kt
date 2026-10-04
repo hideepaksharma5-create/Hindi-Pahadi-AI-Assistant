@@ -107,6 +107,26 @@ enum class SourceLanguage(val code: String, val displayName: String) {
     KUMAONI("kumaoni", "कुमाऊँनी (Kumaoni)")
 }
 
+enum class TranslationDirection(
+    val titleHindi: String,
+    val titleEnglish: String,
+    val sourceLabel: String,
+    val targetLabel: String
+) {
+    HINDI_TO_PAHADI(
+        titleHindi = "हिंदी ➔ पहाड़ी",
+        titleEnglish = "Hindi to Pahadi",
+        sourceLabel = "हिंदी / English",
+        targetLabel = "पहाड़ी बोली"
+    ),
+    PAHADI_TO_HINDI(
+        titleHindi = "पहाड़ी ➔ हिंदी",
+        titleEnglish = "Pahadi to Hindi",
+        sourceLabel = "पहाड़ी बोली",
+        targetLabel = "मानक हिंदी (Hindi)"
+    )
+}
+
 enum class AppMode(
     val titleHindi: String,
     val titleEnglish: String,

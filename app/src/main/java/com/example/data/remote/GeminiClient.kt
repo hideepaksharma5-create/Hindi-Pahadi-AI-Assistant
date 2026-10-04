@@ -36,7 +36,8 @@ object GeminiClient {
     suspend fun translateWithCulturalContext(
         sourceText: String,
         sourceLang: String,
-        targetDialect: PahadiDialect
+        targetDialect: PahadiDialect,
+        isPahadiToHindi: Boolean = false
     ): Result<TranslationResult> = withContext(Dispatchers.IO) {
         val apiKey = BuildConfig.GEMINI_API_KEY
         if (!isApiKeyConfigured()) {
@@ -51,23 +52,32 @@ object GeminiClient {
                 - Dogri (डोगरी).
                 
                 You distinguish each distinct dialect accurately instead of treating all Pahadi as one.
-                Translate the text into the exact target dialect with authentic regional vocabulary, Devanagari script, Roman transliteration, and cultural context.
+                Translate accurately with authentic vocabulary, Devanagari script, Roman transliteration, and cultural context.
                 
                 Respond ONLY with a valid JSON object strictly formatted as:
                 {
-                    "translatedText": "Translated dialect sentence in Devanagari",
+                    "translatedText": "Translated sentence in Devanagari (Clean Hindi if translating from Pahadi, or authentic Dialect if translating to Pahadi)",
                     "phoneticText": "Accurate Roman English phonetic transliteration",
-                    "culturalContext": "Why locals phrase it this way, cultural nuance, honorific usage",
+                    "culturalContext": "Why locals phrase it this way, explanation of dialect words, grammar, and cultural nuance",
                     "etiquetteTip": "Social etiquette and respectful advice for conversation",
                     "regionalVariation": "Specific valley or district nuance (e.g. Kangra, Mandi, Kullu, Shimla)",
                     "exampleUsage": "Natural example sentence in the dialect"
                 }
             """.trimIndent()
 
-            val prompt = """
+            val prompt = if (isPahadiToHindi) {
+                """
+                The following text is in the Pahadi dialect: ${targetDialect.displayNameHindi} (${targetDialect.displayNameEnglish} - ${targetDialect.region}).
+                Translate this authentic Pahadi dialect text accurately into natural, clean standard Hindi (मानक हिंदी).
+                In culturalContext, explain the meaning of any unique Pahadi words, dialect grammar patterns, or idioms used.
+                Pahadi Text: "$sourceText"
+                """.trimIndent()
+            } else {
+                """
                 Translate the following text from $sourceLang to ${targetDialect.displayNameHindi} (${targetDialect.displayNameEnglish}):
                 "$sourceText"
-            """.trimIndent()
+                """.trimIndent()
+            }
 
             val rootJson = JSONObject().apply {
                 put("contents", JSONArray().apply {
@@ -113,7 +123,7 @@ object GeminiClient {
             val parsed = JSONObject(rawText)
             val result = TranslationResult(
                 sourceText = sourceText,
-                sourceLanguage = sourceLang,
+                sourceLanguage = if (isPahadiToHindi) "${targetDialect.displayNameHindi} (पहाड़ी)" else sourceLang,
                 targetDialect = targetDialect,
                 translatedText = parsed.optString("translatedText", sourceText),
                 phoneticText = parsed.optString("phoneticText", ""),

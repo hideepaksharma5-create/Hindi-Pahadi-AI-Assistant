@@ -86,6 +86,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.data.model.PahadiDialect
 import com.example.data.model.SourceLanguage
+import com.example.data.model.TranslationDirection
+import com.example.ui.components.PahadiDialectDropdown
 import com.example.ui.components.SpeechListeningOverlay
 import com.example.ui.theme.HimalayanGoldSecondary
 import com.example.ui.theme.SaffronHimalaya
@@ -104,6 +106,7 @@ fun TranslatorScreen(
     val isTranslating by viewModel.isTranslating.collectAsState()
     val currentTranslation by viewModel.currentTranslation.collectAsState()
     val isSaved by viewModel.isCurrentSaved.collectAsState()
+    val translationDirection by viewModel.translationDirection.collectAsState()
 
     var showDialectSheet by remember { mutableStateOf(false) }
     var showSourceMenu by remember { mutableStateOf(false) }
@@ -173,14 +176,25 @@ fun TranslatorScreen(
         }
     }
 
-    val quickPhrases = listOf(
-        "नमस्ते, आप कैसे हैं?",
-        "क्या आपने खाना खा लिया?",
-        "यह रास्ता कहाँ जाता है?",
-        "इसका क्या भाव है?",
-        "आपसे मिलकर बहुत अच्छा लगा",
-        "धूप निकल आई है, बाहर आओ"
-    )
+    val quickPhrases = if (translationDirection == TranslationDirection.PAHADI_TO_HINDI) {
+        listOf(
+            "तुहाड़े के हाल न?",
+            "तुसीं कुथू चले?",
+            "पैलाग दाज्यू!",
+            "काल्हे डांड्या मथि घाम खिलणा",
+            "ताता सिड्डू कने घी खावा",
+            "आपु किद्दां आ? सब भल च?"
+        )
+    } else {
+        listOf(
+            "नमस्ते, आप कैसे हैं?",
+            "क्या आपने खाना खा लिया?",
+            "यह रास्ता कहाँ जाता है?",
+            "इसका क्या भाव है?",
+            "आपसे मिलकर बहुत अच्छा लगा",
+            "धूप निकल आई है, बाहर आओ"
+        )
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -190,6 +204,91 @@ fun TranslatorScreen(
                 .padding(16.dp)
                 .testTag("translator_screen")
         ) {
+            // Direction Switcher Tabs (Hindi -> Pahadi vs Pahadi -> Hindi)
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("direction_selector_card")
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    val isHindiToPahadi = translationDirection == TranslationDirection.HINDI_TO_PAHADI
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (isHindiToPahadi) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { viewModel.setTranslationDirection(TranslationDirection.HINDI_TO_PAHADI) }
+                            .padding(vertical = 10.dp)
+                            .testTag("direction_hindi_to_pahadi")
+                    ) {
+                        Text(
+                            text = "🇮🇳 हिंदी ➔ 🏔️ पहाड़ी",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = if (isHindiToPahadi) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isHindiToPahadi) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    val isPahadiToHindi = translationDirection == TranslationDirection.PAHADI_TO_HINDI
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (isPahadiToHindi) SaffronHimalaya else Color.Transparent,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { viewModel.setTranslationDirection(TranslationDirection.PAHADI_TO_HINDI) }
+                            .padding(vertical = 10.dp)
+                            .testTag("direction_pahadi_to_hindi")
+                    ) {
+                        Text(
+                            text = "🏔️ पहाड़ी ➔ 🇮🇳 हिंदी",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = if (isPahadiToHindi) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isPahadiToHindi) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            if (translationDirection == TranslationDirection.PAHADI_TO_HINDI) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = SaffronHimalaya.copy(alpha = 0.12f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🎙️ पहाड़ी ➔ हिंदी अनुवाद: आप ${targetDialect.displayNameHindi.substringBefore(" (")} में बोलेंगे या लिखेंगे, तो ऐप उसका मानक हिंदी में अनुवाद करेगा।",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = SaffronHimalaya,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
         // Language Selector Row
         Card(
             modifier = Modifier
@@ -262,34 +361,23 @@ fun TranslatorScreen(
                     )
                 }
 
-                // Target Dialect Selector
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable { showDialectSheet = true }
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                        .testTag("target_dialect_picker")
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = targetDialect.displayNameHindi.substringBefore(" ("),
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        )
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Select Dialect",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
+                // Target Dialect Dropdown (Compact)
+                PahadiDialectDropdown(
+                    selectedDialect = targetDialect,
+                    onDialectSelected = { viewModel.setTargetDialect(it) },
+                    compact = true
+                )
             }
         }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Prominent Full-Width Dialect Drop-Down Selector for Translation Accuracy
+        PahadiDialectDropdown(
+            selectedDialect = targetDialect,
+            onDialectSelected = { viewModel.setTargetDialect(it) },
+            compact = false
+        )
 
         Spacer(modifier = Modifier.height(14.dp))
 
@@ -307,7 +395,11 @@ fun TranslatorScreen(
                     onValueChange = { viewModel.setInputText(it) },
                     placeholder = {
                         Text(
-                            "हिंदी या अंग्रेज़ी में लिखें या बोलें...\n(उदा. 'नमस्ते! आप कैसे हैं?')",
+                            if (translationDirection == TranslationDirection.PAHADI_TO_HINDI) {
+                                "पहाड़ी में बोलें या लिखें...\n(उदा. 'तुहाड़े के हाल न?', 'कुथू चले?', 'पैलाग दाज्यू')"
+                            } else {
+                                "हिंदी या अंग्रेज़ी में लिखें या बोलें...\n(उदा. 'नमस्ते! आप कैसे हैं?')"
+                            },
                             style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray)
                         )
                     },
@@ -440,13 +532,25 @@ fun TranslatorScreen(
                         ) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.secondaryContainer
+                                color = if (translationDirection == TranslationDirection.PAHADI_TO_HINDI) {
+                                    Color(0xFF10B981).copy(alpha = 0.2f)
+                                } else {
+                                    MaterialTheme.colorScheme.secondaryContainer
+                                }
                             ) {
                                 Text(
-                                    text = translation.targetDialect.displayNameHindi,
+                                    text = if (translationDirection == TranslationDirection.PAHADI_TO_HINDI) {
+                                        "🇮🇳 मानक हिंदी अनुवाद (Hindi Translation)"
+                                    } else {
+                                        "🏔️ ${translation.targetDialect.displayNameHindi} अनुवाद"
+                                    },
                                     style = MaterialTheme.typography.labelMedium.copy(
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                        color = if (translationDirection == TranslationDirection.PAHADI_TO_HINDI) {
+                                            Color(0xFF047857)
+                                        } else {
+                                            MaterialTheme.colorScheme.onSecondaryContainer
+                                        }
                                     ),
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )

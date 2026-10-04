@@ -37,13 +37,29 @@ class PahadiRepository(private val database: PahadiDatabase) {
     suspend fun translate(
         sourceText: String,
         sourceLang: String,
-        targetDialect: PahadiDialect
+        targetDialect: PahadiDialect,
+        isPahadiToHindi: Boolean = false
     ): TranslationResult {
         val result = if (GeminiClient.isApiKeyConfigured()) {
-            val apiResult = GeminiClient.translateWithCulturalContext(sourceText, sourceLang, targetDialect)
-            apiResult.getOrElse { PahadiOfflineEngine.findOfflineTranslation(sourceText, targetDialect) }
+            val apiResult = GeminiClient.translateWithCulturalContext(
+                sourceText = sourceText,
+                sourceLang = sourceLang,
+                targetDialect = targetDialect,
+                isPahadiToHindi = isPahadiToHindi
+            )
+            apiResult.getOrElse {
+                if (isPahadiToHindi) {
+                    PahadiOfflineEngine.translatePahadiToHindi(sourceText, targetDialect)
+                } else {
+                    PahadiOfflineEngine.findOfflineTranslation(sourceText, targetDialect)
+                }
+            }
         } else {
-            PahadiOfflineEngine.findOfflineTranslation(sourceText, targetDialect)
+            if (isPahadiToHindi) {
+                PahadiOfflineEngine.translatePahadiToHindi(sourceText, targetDialect)
+            } else {
+                PahadiOfflineEngine.findOfflineTranslation(sourceText, targetDialect)
+            }
         }
 
         dao.insertTranslation(
