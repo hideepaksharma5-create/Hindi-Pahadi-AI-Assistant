@@ -14,9 +14,27 @@ import urllib.error
 import http.server
 import socketserver
 import webbrowser
+import time
 from typing import Dict, Any, List
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 PORT = 8080
+
+try:
+    import voice_clone_engine
+except Exception as e:
+    print(f"Notice: voice_clone_engine not loaded: {e}")
+    voice_clone_engine = None
 
 PLACEHOLDER_KEYS = {"MY_GEMINI_API_KEY", "YOUR_GEMINI_API_KEY_HERE", "<YOUR_KEY>", ""}
 
@@ -628,8 +646,8 @@ def call_gemini_api(prompt: str, system_prompt: str, json_mode: bool = False) ->
     if not api_key:
         raise ValueError("GEMINI_API_KEY is not configured")
     
-    # Try gemini-2.5-flash, then fallback to gemini-2.0-flash, gemini-1.5-flash
-    models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+    # Primary active models with fallback to latest stable aliases
+    models = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-latest"]
     last_err = None
     
     for model in models:
@@ -669,13 +687,14 @@ def call_gemini_api(prompt: str, system_prompt: str, json_mode: bool = False) ->
                 return parts[0].get("text", "")
         except urllib.error.HTTPError as e:
             last_err = e
-            # If 404 (model not found on tier/version), try next model candidate
-            if e.code == 404:
+            # If model deprecated/not found (404) or transient rate limit / overload (503/429), try next model candidate
+            if e.code in (404, 503, 429):
+                time.sleep(0.5)
                 continue
             raise
         except Exception as e:
             last_err = e
-            raise
+            continue
             
     if last_err:
         raise last_err
@@ -1085,6 +1104,54 @@ INDEX_HTML = """<!DOCTYPE html>
       background: rgba(30, 41, 59, 0.8);
       border: 1px solid var(--card-border);
       border-bottom-left-radius: 4px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .message.assistant.speaking-bubble {
+      border-color: rgba(56, 189, 248, 0.6);
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+    }
+    .msg-content {
+      line-height: 1.6;
+      word-break: break-word;
+    }
+    .msg-content strong {
+      color: #fcd34d;
+    }
+    .msg-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-tts {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #93c5fd;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .btn-tts:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: #38bdf8;
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    .btn-tts.speaking {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #ef4444;
+      color: #fca5a5;
+      animation: pulseSpeaking 1.5s infinite ease-in-out;
+    }
+    @keyframes pulseSpeaking {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 10px 2px rgba(239, 68, 68, 0.6); }
     }
 
     .chat-input-bar {
@@ -1202,6 +1269,10 @@ INDEX_HTML = """<!DOCTYPE html>
         <button class="nav-tab" onclick="switchTab('heritage')">🏛️ धरोहर व ज्ञान</button>
       </nav>
 
+      <button class="btn-key" id="voiceCloneNavBtn" onclick="openVoiceCloneModal()" style="background: rgba(139, 92, 246, 0.15); border-color: #8b5cf6; color: #c4b5fd;">
+        <span id="voiceCloneStatusIcon">🎙️</span> <span id="voiceCloneStatusText">मेरी आवाज़ (Voice)</span>
+      </button>
+
       <button class="btn-key" onclick="openKeyModal()">
         <span>🔑</span> <span id="keyStatusText">Gemini Key</span>
       </button>
@@ -1255,16 +1326,34 @@ INDEX_HTML = """<!DOCTYPE html>
     <!-- TAB 2: CHAT (PAHADI MITRA) -->
     <div id="tab-chat" class="tab-content">
       <div class="card chat-container">
-        <div class="mode-bar">
-          <button class="mode-chip active" onclick="setChatMode('standard', this)">🌟 सर्वज्ञ मित्र (Standard)</button>
-          <button class="mode-chip" onclick="setChatMode('elder', this)">👴 बुजुर्ग मित्र (Elder Friendly)</button>
-          <button class="mode-chip" onclick="setChatMode('farmer', this)">🍎 किसान व बागवान (Apple/Farm)</button>
-          <button class="mode-chip" onclick="setChatMode('student', this)">📚 छात्र सहायक (Student)</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom: 0.8rem;">
+          <div class="mode-bar" style="margin-bottom:0; flex:1;">
+            <button class="mode-chip active" onclick="setChatMode('standard', this)">🌟 सर्वज्ञ मित्र (Standard)</button>
+            <button class="mode-chip" onclick="setChatMode('elder', this)">👴 बुजुर्ग मित्र (Elder Friendly)</button>
+            <button class="mode-chip" onclick="setChatMode('farmer', this)">🍎 किसान व बागवान (Apple/Farm)</button>
+            <button class="mode-chip" onclick="setChatMode('student', this)">📚 छात्र सहायक (Student)</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button id="voiceModeToggle" class="mode-chip" onclick="toggleVoiceMode()" title="आवाज़ चुनें (डिफ़ॉल्ट या आपकी क्लोन आवाज़)">
+              🎙️ आवाज़: <span id="voiceModeLabel" style="color:#38bdf8; font-weight:600;">डिफ़ॉल्ट</span>
+            </button>
+            <button id="autoReadToggle" class="mode-chip" onclick="toggleAutoRead()" title="उत्तर मिलते ही अपने-आप आवाज़ में बोलकर सुनाएं">
+              🔊 ऑटो-रीड: <span id="autoReadStatus" style="color:#f87171; font-weight:600;">बंद</span>
+            </button>
+            <button id="globalStopTtsBtn" class="mode-chip" onclick="stopAllSpeech()" style="display:none; background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #fca5a5;" title="आवाज़ तुरंत बंद करें">
+              ⏹️ बोलना रोकें
+            </button>
+          </div>
         </div>
 
         <div id="chatMessages" class="chat-messages">
           <div class="message assistant">
-            नमस्कार जी! पैलाग! मैं 'पहाड़ी मित्र' हूँ। आप मुझसे हिमाचली व गढ़वाली-कुमाऊंनी बोलियों, सेब के बगीचों, पारंपरिक धाम, लोककथाओं या सामान्य सहायता के बारे में पूछ सकते हैं।
+            <div class="msg-content">नमस्कार जी! पैलाग! मैं <strong>'पहाड़ी मित्र'</strong> हूँ। आप मुझसे हिमाचली व गढ़वाली-कुमाऊंनी बोलियों, सेब के बगीचों, पारंपरिक धाम, लोककथाओं या सामान्य सहायता के बारे में पूछ सकते हैं।</div>
+            <div class="msg-actions">
+              <button class="btn-tts" onclick="speakChatMessage(this)" title="बोलकर सुनाएं (Read Aloud)">
+                <span class="tts-icon">🔊</span> <span class="tts-label">सुनें (Read Aloud)</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1335,6 +1424,59 @@ INDEX_HTML = """<!DOCTYPE html>
     </div>
   </div>
 
+  <!-- VOICE CLONE MODAL -->
+  <div id="voiceCloneModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 540px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.8rem;">
+        <h3 style="margin:0; color: #c084fc;">🎙️ व्यक्तिगत आवाज़ क्लोनिंग (Voice Clone Studio)</h3>
+        <button class="btn-icon" onclick="closeVoiceCloneModal()" style="font-size:1.1rem; line-height:1;">✕</button>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.8rem; line-height: 1.5;">
+        AI को अपनी आवाज़ में बोलने के लिए सिखाएं। नीचे माइक बटन दबाकर 8-10 सेकंड का अपना वॉइस सैंपल रिकॉर्ड करें।
+      </p>
+
+      <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 10px; padding: 12px; margin-bottom: 1rem; font-size: 0.88rem; color: #fde68a;">
+        <strong>📖 रिकॉर्ड करते समय इस वाक्य को बोलें:</strong><br>
+        <em>"नमस्कार जी! मैं पहाड़ी संगम AI सहायक का उपयोग कर रहा हूँ। यह मेरी अपनी आवाज़ का नमूना है।"</em>
+      </div>
+
+      <!-- Live Recorder Panel -->
+      <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.25rem; text-align: center; margin-bottom: 1rem;">
+        <div id="recordTimer" style="font-size: 1.8rem; font-weight: 700; color: #38bdf8; margin-bottom: 0.4rem;">00:00</div>
+        <div id="recordStatus" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">नीचे लाल बटन दबाकर बोलना शुरू करें</div>
+
+        <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+          <button id="startRecordBtn" class="btn-primary" onclick="startVoiceRecording()" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+            🎙️ रिकॉर्ड शुरू करें (Start)
+          </button>
+          <button id="stopRecordBtn" class="btn-primary" onclick="stopVoiceRecording()" style="display: none; background: #475569;">
+            ⏹️ रिकॉर्डिंग रोकें (Stop)
+          </button>
+        </div>
+
+        <!-- Preview player -->
+        <div id="recordedPreviewSection" style="display: none; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+          <div style="font-size: 0.85rem; margin-bottom: 0.5rem; color: #34d399;">✅ रिकॉर्डिंग पूरी हुई! प्ले करके सुनें:</div>
+          <audio id="recordedAudioPlayer" controls style="width: 100%; height: 36px; margin-bottom: 0.75rem;"></audio>
+          <button class="btn-primary" onclick="uploadRecordedVoice()" style="background: linear-gradient(135deg, #10b981, #059669); width: 100%;">
+            💾 यह आवाज़ AI में सुरक्षित करें (Save Voice)
+          </button>
+        </div>
+      </div>
+
+      <!-- File upload fallback -->
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; flex-wrap: wrap; gap: 6px;">
+        <span>या WAV/MP3 ऑडियो फाइल अपलोड करें:</span>
+        <input type="file" id="voiceFileInput" accept="audio/*" onchange="handleVoiceFileUpload(event)" style="font-size: 0.8rem; max-width: 190px;" />
+      </div>
+
+      <div id="voiceFeedback" style="font-size: 0.85rem; margin-top: 0.75rem; display: none;"></div>
+      <div class="modal-actions" style="margin-top: 1rem;">
+        <button class="btn-secondary" onclick="closeVoiceCloneModal()">बंद करें (Close)</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let dialects = [];
     let phrases = [];
@@ -1369,8 +1511,9 @@ INDEX_HTML = """<!DOCTYPE html>
       loadStories();
       loadPhrases();
 
-      // Check key
+      // Check key & voice clone status
       checkKeyStatus();
+      checkVoiceCloneStatus();
     }
 
     function switchTab(name) {
@@ -1458,10 +1601,8 @@ INDEX_HTML = """<!DOCTYPE html>
     function speakTranslation() {
       const text = document.getElementById('translatedOutput').textContent;
       if (!text || text.includes("...")) return;
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = isPahadiToHindi ? 'hi-IN' : 'hi-IN';
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
+      const btn = document.getElementById('speakResultBtn');
+      speakText(text, btn);
     }
 
     // Speech Recognition
@@ -1502,6 +1643,390 @@ INDEX_HTML = """<!DOCTYPE html>
       recognition.start();
     }
 
+    // TTS & Speech Synthesis Controls
+    let currentSpeakingUtterance = null;
+    let currentSpeakingBtn = null;
+    let isAutoReadEnabled = false;
+
+    function cleanTextForSpeech(text) {
+      if (!text) return "";
+      return text
+        .replace(/\\*\\*(.*?)\\*\\*/g, '$1')     // remove bold **
+        .replace(/\\*(.*?)\\*/g, '$1')         // remove italic *
+        .replace(/#{1,6}\\s+/g, '')           // remove headings
+        .replace(/`{1,3}.*?`{1,3}/gs, '')    // remove code blocks
+        .replace(/\\[(.*?)\\]\\(.*?\\)/g, '$1')  // remove markdown links
+        .replace(/^\\s*[\\*\\-\\+•]\\s+/gm, '')   // remove bullet symbols
+        .replace(/^\\s*\\d+\\.\\s+/gm, '')       // remove numbered list prefixes
+        .replace(/\\n+/g, ' ')                // replace newlines with space
+        .trim();
+    }
+
+    function formatMarkdown(text) {
+      if (!text) return "";
+      let escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      
+      // bold **text**
+      escaped = escaped.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
+      // italic *text*
+      escaped = escaped.replace(/\\*(.*?)\\*/g, '<em>$1</em>');
+      // bullet lines
+      escaped = escaped.replace(/^[\\*\\-\\•]\\s+(.*)$/gm, '<div style="margin-left: 12px; margin-bottom: 3px;">• $1</div>');
+      // newlines to paragraphs / breaks
+      escaped = escaped.replace(/\\n\\n+/g, '<div style="margin-bottom: 0.6rem;"></div>');
+      escaped = escaped.replace(/\\n/g, '<br>');
+      return escaped;
+    }
+
+    function getHindiVoice() {
+      if (!window.speechSynthesis) return null;
+      const voices = window.speechSynthesis.getVoices();
+      if (!voices || voices.length === 0) return null;
+      
+      return voices.find(v => v.lang === 'hi-IN' || v.lang === 'hi_IN') ||
+             voices.find(v => v.lang.toLowerCase().startsWith('hi')) ||
+             voices.find(v => v.name.toLowerCase().includes('hindi')) ||
+             voices.find(v => v.lang.includes('IN')) ||
+             voices[0];
+    }
+
+    if (window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        // Cache voices in background
+        getHindiVoice();
+      };
+    }
+
+    // Voice Clone & Audio State
+    let selectedVoiceMode = 'default'; // 'default' or 'cloned'
+    let currentAudioPlayer = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recordTimerInterval = null;
+    let recordSeconds = 0;
+    let recordedBlob = null;
+    let hasClonedVoice = false;
+
+    function openVoiceCloneModal() {
+      document.getElementById('voiceCloneModal').classList.add('active');
+      checkVoiceCloneStatus();
+    }
+
+    function closeVoiceCloneModal() {
+      document.getElementById('voiceCloneModal').classList.remove('active');
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        stopVoiceRecording();
+      }
+    }
+
+    async function checkVoiceCloneStatus() {
+      try {
+        const resp = await fetch('/api/voice/status');
+        const data = await resp.json();
+        hasClonedVoice = data.hasVoice;
+        const icon = document.getElementById('voiceCloneStatusIcon');
+        const text = document.getElementById('voiceCloneStatusText');
+        const feedback = document.getElementById('voiceFeedback');
+        
+        if (data.hasVoice) {
+          icon.textContent = '🟢';
+          text.textContent = 'मेरी आवाज़ (Active)';
+          if (feedback) {
+            feedback.style.display = 'block';
+            feedback.style.color = '#34d399';
+            feedback.textContent = `✅ आपकी आवाज़ सुरक्षित है (${(data.voiceSizeBytes / 1024).toFixed(1)} KB)। आप चैट में 'मेरी आवाज़' चुनकर इसे सुन सकते हैं।`;
+          }
+        } else {
+          icon.textContent = '🎙️';
+          text.textContent = 'मेरी आवाज़ (Voice)';
+        }
+      } catch (e) {
+        console.error("Voice status error", e);
+      }
+    }
+
+    function toggleVoiceMode() {
+      const label = document.getElementById('voiceModeLabel');
+      const btn = document.getElementById('voiceModeToggle');
+      if (selectedVoiceMode === 'default') {
+        if (!hasClonedVoice) {
+          openVoiceCloneModal();
+          const feedback = document.getElementById('voiceFeedback');
+          if (feedback) {
+            feedback.style.display = 'block';
+            feedback.style.color = '#f59e0b';
+            feedback.textContent = '⚠️ कृपया पहले नीचे अपना 10 सेकंड का वॉइस सैंपल रिकॉर्ड या अपलोड करें!';
+          }
+          return;
+        }
+        selectedVoiceMode = 'cloned';
+        label.textContent = 'मेरी आवाज़ (Cloned) ✨';
+        label.style.color = '#c084fc';
+        btn.style.borderColor = '#c084fc';
+        btn.style.background = 'rgba(192, 132, 252, 0.15)';
+      } else {
+        selectedVoiceMode = 'default';
+        label.textContent = 'डिफ़ॉल्ट';
+        label.style.color = '#38bdf8';
+        btn.style.borderColor = '';
+        btn.style.background = '';
+      }
+    }
+
+    async function startVoiceRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) {
+            recordedChunks.push(e.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          recordedBlob = new Blob(recordedChunks, { type: 'audio/wav' });
+          const audioUrl = URL.createObjectURL(recordedBlob);
+          const player = document.getElementById('recordedAudioPlayer');
+          player.src = audioUrl;
+          document.getElementById('recordedPreviewSection').style.display = 'block';
+          document.getElementById('recordStatus').textContent = '✅ रिकॉर्डिंग पूरी हुई! नीचे प्ले करके देखें या सेव करें।';
+        };
+
+        mediaRecorder.start();
+        document.getElementById('startRecordBtn').style.display = 'none';
+        document.getElementById('stopRecordBtn').style.display = 'inline-block';
+        document.getElementById('recordedPreviewSection').style.display = 'none';
+        document.getElementById('recordStatus').textContent = '🔴 रिकॉर्ड हो रहा है... कृपया दिया गया वाक्य स्पष्ट बोलें!';
+
+        recordSeconds = 0;
+        document.getElementById('recordTimer').textContent = '00:00';
+        clearInterval(recordTimerInterval);
+        recordTimerInterval = setInterval(() => {
+          recordSeconds++;
+          const sec = recordSeconds < 10 ? '0' + recordSeconds : recordSeconds;
+          document.getElementById('recordTimer').textContent = `00:${sec}`;
+          if (recordSeconds >= 12) {
+            stopVoiceRecording();
+          }
+        }, 1000);
+
+      } catch (err) {
+        alert("माइक्रोफोन का एक्सेस नहीं मिल सका। कृपया ब्राउज़र में माइक की अनुमति दें।");
+      }
+    }
+
+    function stopVoiceRecording() {
+      clearInterval(recordTimerInterval);
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+      document.getElementById('startRecordBtn').style.display = 'inline-block';
+      document.getElementById('stopRecordBtn').style.display = 'none';
+    }
+
+    async function uploadRecordedVoice() {
+      if (!recordedBlob) return;
+      const feedback = document.getElementById('voiceFeedback');
+      feedback.style.display = 'block';
+      feedback.style.color = '#38bdf8';
+      feedback.textContent = 'आपकी आवाज़ सुरक्षित की जा रही है...';
+
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Audio = reader.result;
+        try {
+          const resp = await fetch('/api/voice/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ audioData: base64Audio })
+          });
+          const data = await resp.json();
+          if (data.success) {
+            feedback.style.color = '#34d399';
+            feedback.textContent = '🎉 आपकी आवाज़ सफलतापूर्वक सुरक्षित हो गई! अब AI आपकी आवाज़ में बोलेगा।';
+            hasClonedVoice = true;
+            checkVoiceCloneStatus();
+            setTimeout(() => {
+              selectedVoiceMode = 'cloned';
+              const label = document.getElementById('voiceModeLabel');
+              if (label) {
+                label.textContent = 'मेरी आवाज़ (Cloned) ✨';
+                label.style.color = '#c084fc';
+              }
+              const btn = document.getElementById('voiceModeToggle');
+              if (btn) {
+                btn.style.borderColor = '#c084fc';
+                btn.style.background = 'rgba(192, 132, 252, 0.15)';
+              }
+            }, 1000);
+          } else {
+            feedback.style.color = '#f87171';
+            feedback.textContent = data.error || 'आवाज़ सुरक्षित करने में त्रुटि आई।';
+          }
+        } catch (e) {
+          feedback.style.color = '#f87171';
+          feedback.textContent = 'सर्वर से संपर्क करने में असमर्थ।';
+        }
+      };
+      reader.readAsDataURL(recordedBlob);
+    }
+
+    function handleVoiceFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      recordedBlob = file;
+      const player = document.getElementById('recordedAudioPlayer');
+      player.src = URL.createObjectURL(file);
+      document.getElementById('recordedPreviewSection').style.display = 'block';
+      uploadRecordedVoice();
+    }
+
+    function stopAllSpeech() {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      if (currentAudioPlayer) {
+        currentAudioPlayer.pause();
+        currentAudioPlayer.currentTime = 0;
+        currentAudioPlayer = null;
+      }
+      if (currentSpeakingBtn) {
+        currentSpeakingBtn.classList.remove('speaking');
+        const label = currentSpeakingBtn.querySelector('.tts-label');
+        const icon = currentSpeakingBtn.querySelector('.tts-icon');
+        if (label) label.textContent = 'सुनें (Read Aloud)';
+        if (icon) icon.textContent = '🔊';
+        const parentMsg = currentSpeakingBtn.closest('.message');
+        if (parentMsg) parentMsg.classList.remove('speaking-bubble');
+        currentSpeakingBtn = null;
+      }
+      const stopBtn = document.getElementById('globalStopTtsBtn');
+      if (stopBtn) stopBtn.style.display = 'none';
+      currentSpeakingUtterance = null;
+    }
+
+    async function speakText(rawText, btnElement = null) {
+      // If user clicks the currently active speaking button, stop it
+      if (btnElement && btnElement === currentSpeakingBtn) {
+        stopAllSpeech();
+        return;
+      }
+
+      stopAllSpeech();
+
+      const spokenText = cleanTextForSpeech(rawText);
+      if (!spokenText) return;
+
+      if (btnElement) {
+        currentSpeakingBtn = btnElement;
+        btnElement.classList.add('speaking');
+        const label = btnElement.querySelector('.tts-label');
+        const icon = btnElement.querySelector('.tts-icon');
+        if (label) label.textContent = selectedVoiceMode === 'cloned' ? '⏳ आवाज़ बन रही है...' : 'रोकें (Stop)';
+        if (icon) icon.textContent = selectedVoiceMode === 'cloned' ? '✨' : '⏹️';
+        const parentMsg = btnElement.closest('.message');
+        if (parentMsg) parentMsg.classList.add('speaking-bubble');
+      }
+
+      const stopBtn = document.getElementById('globalStopTtsBtn');
+      if (stopBtn) stopBtn.style.display = 'inline-flex';
+
+      // 1. Cloned Voice Mode
+      if (selectedVoiceMode === 'cloned') {
+        try {
+          const resp = await fetch('/api/voice/synthesize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: spokenText })
+          });
+          const data = await resp.json();
+          if (data.success && data.audioUrl) {
+            if (btnElement) {
+              const label = btnElement.querySelector('.tts-label');
+              const icon = btnElement.querySelector('.tts-icon');
+              if (label) label.textContent = 'रोकें (Stop)';
+              if (icon) icon.textContent = '⏹️';
+            }
+            currentAudioPlayer = new Audio(data.audioUrl);
+            currentAudioPlayer.onended = () => stopAllSpeech();
+            currentAudioPlayer.onerror = () => stopAllSpeech();
+            await currentAudioPlayer.play();
+            return;
+          } else {
+            console.warn("Cloned synthesis failed, falling back to browser speech:", data.error);
+          }
+        } catch (e) {
+          console.warn("Cloned synthesis error, falling back to browser speech:", e);
+        }
+      }
+
+      // 2. Default Browser Voice (Fallback or Default Mode)
+      if (!window.speechSynthesis) {
+        alert("आपका ब्राउज़र टेक्स्ट-टू-स्पीच का समर्थन नहीं करता है।");
+        stopAllSpeech();
+        return;
+      }
+
+      if (btnElement) {
+        const label = btnElement.querySelector('.tts-label');
+        const icon = btnElement.querySelector('.tts-icon');
+        if (label) label.textContent = 'रोकें (Stop)';
+        if (icon) icon.textContent = '⏹️';
+      }
+
+      const utterance = new SpeechSynthesisUtterance(spokenText);
+      const voice = getHindiVoice();
+      if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang;
+      } else {
+        utterance.lang = 'hi-IN';
+      }
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+
+      utterance.onend = () => stopAllSpeech();
+      utterance.onerror = () => stopAllSpeech();
+
+      currentSpeakingUtterance = utterance;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function speakChatMessage(btn) {
+      const rawText = btn.dataset.rawText ? decodeURIComponent(btn.dataset.rawText) : "";
+      if (rawText) {
+        speakText(rawText, btn);
+      } else {
+        const parent = btn.closest('.message');
+        const content = parent.querySelector('.msg-content') || parent;
+        speakText(content.innerText, btn);
+      }
+    }
+
+    function toggleAutoRead() {
+      isAutoReadEnabled = !isAutoReadEnabled;
+      const statusSpan = document.getElementById('autoReadStatus');
+      const btn = document.getElementById('autoReadToggle');
+      if (isAutoReadEnabled) {
+        statusSpan.textContent = 'चालू 🔊';
+        statusSpan.style.color = '#34d399';
+        btn.style.borderColor = '#10b981';
+        btn.style.background = 'rgba(16, 185, 129, 0.15)';
+      } else {
+        statusSpan.textContent = 'बंद';
+        statusSpan.style.color = '#f87171';
+        btn.style.borderColor = '';
+        btn.style.background = '';
+        stopAllSpeech();
+      }
+    }
+
     // Chat functionality
     function setChatMode(mode, btn) {
       currentChatMode = mode;
@@ -1525,7 +2050,7 @@ INDEX_HTML = """<!DOCTYPE html>
 
       const aDiv = document.createElement('div');
       aDiv.className = 'message assistant';
-      aDiv.textContent = 'विचार कर रहा हूँ... 🏔️';
+      aDiv.innerHTML = '<div class="msg-content" style="color: #93c5fd;">विचार कर रहा हूँ... 🏔️</div>';
       container.appendChild(aDiv);
       container.scrollTop = container.scrollHeight;
 
@@ -1541,10 +2066,25 @@ INDEX_HTML = """<!DOCTYPE html>
           })
         });
         const data = await resp.json();
-        aDiv.textContent = data.reply;
+        const formattedHtml = formatMarkdown(data.reply);
+        aDiv.innerHTML = `
+          <div class="msg-content">${formattedHtml}</div>
+          <div class="msg-actions">
+            <button class="btn-tts" onclick="speakChatMessage(this)" title="बोलकर सुनाएं (Read Aloud)">
+              <span class="tts-icon">🔊</span> <span class="tts-label">सुनें (Read Aloud)</span>
+            </button>
+          </div>
+        `;
+        const ttsBtn = aDiv.querySelector('.btn-tts');
+        ttsBtn.dataset.rawText = encodeURIComponent(data.reply);
         chatHistory.push({ isUser: false, text: data.reply });
+
+        // Auto-read aloud if enabled
+        if (isAutoReadEnabled) {
+          speakText(data.reply, ttsBtn);
+        }
       } catch (e) {
-        aDiv.textContent = "क्षमा करें, प्रतिक्रिया प्राप्त करने में समस्या हुई।";
+        aDiv.innerHTML = '<div class="msg-content" style="color:#f87171;">क्षमा करें, प्रतिक्रिया प्राप्त करने में समस्या हुई। कृपया पुनः प्रयास करें।</div>';
       }
       container.scrollTop = container.scrollHeight;
     }
@@ -1756,6 +2296,29 @@ class PahadiServerHandler(http.server.BaseHTTPRequestHandler):
             has_key = bool(key)
             self._set_headers()
             self.wfile.write(json.dumps({"hasKey": has_key, "online": has_key}).encode("utf-8"))
+        elif path == "/api/voice/status":
+            st = voice_clone_engine.get_voice_status() if voice_clone_engine else {"hasVoice": False, "engineLoaded": False}
+            self._set_headers()
+            self.wfile.write(json.dumps(st).encode("utf-8"))
+        elif path.startswith("/api/voice/audio/"):
+            fname = os.path.basename(path)
+            fpath = os.path.join(os.path.dirname(__file__), "custom_voice", "outputs", fname)
+            if os.path.exists(fpath):
+                self._set_headers("audio/wav")
+                with open(fpath, "rb") as f:
+                    self.wfile.write(f.read())
+            else:
+                self._set_headers("text/plain", 404)
+                self.wfile.write(b"Audio Not Found")
+        elif path == "/api/voice/sample":
+            fpath = os.path.join(os.path.dirname(__file__), "custom_voice", "my_voice.wav")
+            if os.path.exists(fpath):
+                self._set_headers("audio/wav")
+                with open(fpath, "rb") as f:
+                    self.wfile.write(f.read())
+            else:
+                self._set_headers("text/plain", 404)
+                self.wfile.write(b"Sample Not Found")
         else:
             self._set_headers("text/plain", 404)
             self.wfile.write(b"Not Found")
@@ -1831,19 +2394,66 @@ class PahadiServerHandler(http.server.BaseHTTPRequestHandler):
                 self._set_headers(status=400)
                 self.wfile.write(json.dumps({"success": False, "error": "अमान्य API Key"}).encode("utf-8"))
 
+        elif path == "/api/voice/upload":
+            import base64
+            audio_b64 = body.get("audioData", "")
+            if audio_b64:
+                if "," in audio_b64:
+                    audio_b64 = audio_b64.split(",", 1)[1]
+                audio_bytes = base64.b64decode(audio_b64)
+                out_path = os.path.join(os.path.dirname(__file__), "custom_voice", "my_voice.wav")
+                os.makedirs(os.path.dirname(out_path), exist_ok=True)
+                with open(out_path, "wb") as f:
+                    f.write(audio_bytes)
+                self._set_headers()
+                self.wfile.write(json.dumps({"success": True, "size": len(audio_bytes)}).encode("utf-8"))
+            else:
+                self._set_headers(status=400)
+                self.wfile.write(json.dumps({"success": False, "error": "No audio received"}).encode("utf-8"))
+
+        elif path == "/api/voice/synthesize":
+            text = body.get("text", "")
+            if not text:
+                self._set_headers(status=400)
+                self.wfile.write(json.dumps({"success": False, "error": "No text provided"}).encode("utf-8"))
+            else:
+                try:
+                    if voice_clone_engine and voice_clone_engine.is_reference_voice_ready():
+                        audio_filename = voice_clone_engine.synthesize(text)
+                        self._set_headers()
+                        self.wfile.write(json.dumps({
+                            "success": True,
+                            "audioUrl": f"/api/voice/audio/{audio_filename}"
+                        }).encode("utf-8"))
+                    else:
+                        self._set_headers(status=400)
+                        self.wfile.write(json.dumps({
+                            "success": False,
+                            "error": "कृपया पहले अपनी आवाज़ रिकॉर्ड करें!"
+                        }).encode("utf-8"))
+                except Exception as e:
+                    self._set_headers(status=500)
+                    self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode("utf-8"))
+
         else:
             self._set_headers("text/plain", 404)
             self.wfile.write(b"Not Found")
 
 def run(port=PORT):
-    server_address = ("", port)
-    try:
-        httpd = socketserver.TCPServer(server_address, PahadiServerHandler)
-    except OSError:
-        # If port 8080 is occupied, try 8081
-        port = 8081
-        server_address = ("", port)
-        httpd = socketserver.TCPServer(server_address, PahadiServerHandler)
+    socketserver.TCPServer.allow_reuse_address = True
+    httpd = None
+    for p in [port, 8080, 8081, 8082, 8085, 8090]:
+        try:
+            server_address = ("", p)
+            httpd = socketserver.TCPServer(server_address, PahadiServerHandler)
+            port = p
+            break
+        except OSError:
+            continue
+
+    if not httpd:
+        print("Error: Could not bind to an available port.")
+        return
 
     url = f"http://localhost:{port}"
     print("=" * 64)
