@@ -1,10 +1,12 @@
 package com.example.ui.screens
 
+import android.Manifest
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.speech.RecognizerIntent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -81,8 +83,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.example.data.model.PahadiDialect
 import com.example.data.model.SourceLanguage
+import com.example.ui.components.SpeechListeningOverlay
 import com.example.ui.theme.HimalayanGoldSecondary
 import com.example.ui.theme.SaffronHimalaya
 import com.example.ui.viewmodel.PahadiViewModel
@@ -104,8 +108,12 @@ fun TranslatorScreen(
     var showDialectSheet by remember { mutableStateOf(false) }
     var showSourceMenu by remember { mutableStateOf(false) }
 
-    // Speech-to-text launcher
-    val speechRecognizerLauncher = rememberLauncherForActivityResult(
+    val isListening by viewModel.isListening.collectAsState()
+    val partialTranscript by viewModel.partialSpeechTranscript.collectAsState()
+    val rmsDb by viewModel.speechRmsDb.collectAsState()
+
+    // Fallback speech launcher
+    val fallbackRecognizerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -118,6 +126,53 @@ fun TranslatorScreen(
         }
     }
 
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            if (viewModel.isSpeechAvailable) {
+                viewModel.startSpeechRecognition("hi-IN") { text ->
+                    viewModel.setInputText(text)
+                    viewModel.translateNow()
+                }
+            } else {
+                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, "hi-IN")
+                    putExtra(RecognizerIntent.EXTRA_PROMPT, "पहाड़ी अनुवाद के लिए बोलें...")
+                }
+                fallbackRecognizerLauncher.launch(intent)
+            }
+        } else {
+            Toast.makeText(context, "बोलने के लिए माइक्रोफोन अनुमति आवश्यक है", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun startVoiceInput() {
+        val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+            if (viewModel.isSpeechAvailable) {
+                viewModel.startSpeechRecognition("hi-IN") { text ->
+                    viewModel.setInputText(text)
+                    viewModel.translateNow()
+                }
+            } else {
+                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, "hi-IN")
+                    putExtra(RecognizerIntent.EXTRA_PROMPT, "पहाड़ी अनुवाद के लिए बोलें...")
+                }
+                try {
+                    fallbackRecognizerLauncher.launch(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "स्पीच सेवा उपलब्ध नहीं है", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } else {
+            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
     val quickPhrases = listOf(
         "नमस्ते, आप कैसे हैं?",
         "क्या आपने खाना खा लिया?",
@@ -127,13 +182,14 @@ fun TranslatorScreen(
         "धूप निकल आई है, बाहर आओ"
     )
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-            .testTag("translator_screen")
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+                .testTag("translator_screen")
+        ) {
         // Language Selector Row
         Card(
             modifier = Modifier
@@ -275,23 +331,14 @@ fun TranslatorScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(
                             onClick = {
-                                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, "hi-IN")
-                                    putExtra(RecognizerIntent.EXTRA_PROMPT, "पहाड़ी अनुवाद के लिए बोलें...")
-                                }
-                                try {
-                                    speechRecognizerLauncher.launch(intent)
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Voice input not available", Toast.LENGTH_SHORT).show()
-                                }
+                                if (isListening) viewModel.stopSpeechRecognition() else startVoiceInput()
                             },
                             modifier = Modifier.testTag("mic_input_button")
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Mic,
                                 contentDescription = "Voice Input",
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = if (isListening) SaffronHimalaya else MaterialTheme.colorScheme.primary
                             )
                         }
 
@@ -665,5 +712,16 @@ fun TranslatorScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
+    }
+
+        SpeechListeningOverlay(
+            isListening = isListening,
+            partialText = partialTranscript,
+            rmsDb = rmsDb,
+            targetDialectName = targetDialect.displayNameHindi.substringBefore(" ("),
+            onStopListening = { viewModel.stopSpeechRecognition() },
+            onCancelListening = { viewModel.cancelSpeechRecognition() },
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }

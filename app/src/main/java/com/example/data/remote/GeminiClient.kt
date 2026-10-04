@@ -212,6 +212,11 @@ object GeminiClient {
 
             val rootJson = JSONObject().apply {
                 put("contents", contentsArray)
+                put("tools", JSONArray().apply {
+                    put(JSONObject().apply {
+                        put("googleSearch", JSONObject())
+                    })
+                })
                 put("systemInstruction", JSONObject().apply {
                     put("parts", JSONArray().apply {
                         put(JSONObject().apply { put("text", systemInstruction) })

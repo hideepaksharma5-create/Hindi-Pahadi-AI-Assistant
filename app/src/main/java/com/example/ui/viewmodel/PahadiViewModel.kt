@@ -20,6 +20,7 @@ import com.example.data.model.TranslationResult
 import com.example.data.model.VoiceGender
 import com.example.data.remote.GeminiClient
 import com.example.data.repository.PahadiRepository
+import com.example.util.PahadiSpeechRecognizerManager
 import com.example.util.PahadiTtsManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,8 +33,16 @@ class PahadiViewModel(application: Application) : AndroidViewModel(application) 
 
     private val repository = PahadiRepository(PahadiDatabase.getInstance(application))
     private val ttsManager = PahadiTtsManager(application)
+    private val speechManager = PahadiSpeechRecognizerManager(application)
 
     val isGeminiAvailable = GeminiClient.isApiKeyConfigured()
+    val isSpeechAvailable = speechManager.isRecognitionAvailable
+
+    // Live Speech Recognition states
+    val isListening: StateFlow<Boolean> = speechManager.isListening
+    val partialSpeechTranscript: StateFlow<String> = speechManager.partialTranscript
+    val speechRmsDb: StateFlow<Float> = speechManager.rmsDb
+    val speechError: StateFlow<String?> = speechManager.lastError
 
     // ----------------- Modes & Personalization -----------------
     private val _appMode = MutableStateFlow(AppMode.STANDARD)
@@ -336,8 +345,23 @@ class PahadiViewModel(application: Application) : AndroidViewModel(application) 
         ttsManager.stop()
     }
 
+    // ----------------- Speech Recognition -----------------
+    fun startSpeechRecognition(langCode: String = "hi-IN", onFinalResult: (String) -> Unit) {
+        stopSpeaking()
+        speechManager.startListening(langCode, onFinalResult)
+    }
+
+    fun stopSpeechRecognition() {
+        speechManager.stopListening()
+    }
+
+    fun cancelSpeechRecognition() {
+        speechManager.cancel()
+    }
+
     override fun onCleared() {
         super.onCleared()
+        speechManager.destroy()
         ttsManager.shutdown()
     }
 }
