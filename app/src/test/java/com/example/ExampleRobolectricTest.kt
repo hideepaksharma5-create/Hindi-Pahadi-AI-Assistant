@@ -92,4 +92,11 @@ class ExampleRobolectricTest {
     val updatedCount = chatDao.getMessageCount()
     assertEquals(2, updatedCount)
   }
+
+  @Test
+  fun `verify gemini chat tab in main activity`() {
+    val tabs = PahadiNavTab.entries
+    assertEquals(PahadiNavTab.GEMINI_CHAT, tabs[0])
+    assertEquals("nav_gemini_chat", tabs[0].testTag)
+  }
 }
