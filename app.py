@@ -18,6 +18,8 @@ from typing import Dict, Any, List
 
 PORT = 8080
 
+PLACEHOLDER_KEYS = {"MY_GEMINI_API_KEY", "YOUR_GEMINI_API_KEY_HERE", "<YOUR_KEY>", ""}
+
 # Load .env if present
 def load_env_file():
     env_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -28,9 +30,16 @@ def load_env_file():
                     line = line.strip()
                     if line and not line.startswith("#") and "=" in line:
                         k, v = line.split("=", 1)
-                        os.environ.setdefault(k.strip(), v.strip())
+                        clean_v = v.strip().strip('"').strip("'")
+                        if clean_v and clean_v not in PLACEHOLDER_KEYS:
+                            os.environ[k.strip()] = clean_v
         except Exception as e:
             print(f"Notice: Could not read .env: {e}")
+
+def get_gemini_api_key() -> str:
+    load_env_file()
+    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    return "" if key in PLACEHOLDER_KEYS else key
 
 load_env_file()
 
@@ -615,44 +624,62 @@ def offline_translate(query: str, dialect_code: str, is_reverse: bool = False) -
         }
 
 def call_gemini_api(prompt: str, system_prompt: str, json_mode: bool = False) -> str:
-    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
-    if not api_key or api_key == "MY_GEMINI_API_KEY":
+    api_key = get_gemini_api_key()
+    if not api_key:
         raise ValueError("GEMINI_API_KEY is not configured")
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
-    payload: Dict[str, Any] = {
-        "contents": [
-            {
-                "role": "user",
-                "parts": [{"text": prompt}]
-            }
-        ],
-        "systemInstruction": {
-            "parts": [{"text": system_prompt}]
-        },
-        "generationConfig": {
-            "temperature": 0.3
-        }
-    }
-    if json_mode:
-        payload["generationConfig"]["responseMimeType"] = "application/json"
-        
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST"
-    )
+    # Try gemini-2.5-flash, then fallback to gemini-2.0-flash, gemini-1.5-flash
+    models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+    last_err = None
     
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
-        candidates = data.get("candidates", [])
-        if not candidates:
-            return ""
-        parts = candidates[0].get("content", {}).get("parts", [])
-        if not parts:
-            return ""
-        return parts[0].get("text", "")
+    for model in models:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        payload: Dict[str, Any] = {
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [{"text": prompt}]
+                }
+            ],
+            "systemInstruction": {
+                "parts": [{"text": system_prompt}]
+            },
+            "generationConfig": {
+                "temperature": 0.3
+            }
+        }
+        if json_mode:
+            payload["generationConfig"]["responseMimeType"] = "application/json"
+            
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                candidates = data.get("candidates", [])
+                if not candidates:
+                    return ""
+                parts = candidates[0].get("content", {}).get("parts", [])
+                if not parts:
+                    return ""
+                return parts[0].get("text", "")
+        except urllib.error.HTTPError as e:
+            last_err = e
+            # If 404 (model not found on tier/version), try next model candidate
+            if e.code == 404:
+                continue
+            raise
+        except Exception as e:
+            last_err = e
+            raise
+            
+    if last_err:
+        raise last_err
+    return ""
 
 def gemini_translate(source_text: str, dialect_code: str, is_reverse: bool = False) -> Dict[str, Any]:
     dialect = get_dialect_meta(dialect_code)
@@ -1285,15 +1312,25 @@ INDEX_HTML = """<!DOCTYPE html>
 
   <!-- KEY MODAL -->
   <div id="keyModal" class="modal-overlay">
-    <div class="modal-box">
-      <h3>🔑 Gemini API Key Configuration</h3>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-        Enter your Google Gemini API Key to enable advanced AI dialect generation & chatbot intelligence. If left blank, Pahadi AI runs fully on its built-in offline engine!
+    <div class="modal-box" style="max-width: 520px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.8rem;">
+        <h3 style="margin:0;">🔑 ऑनलाइन मोड सक्रिय करें (Activate Online Mode)</h3>
+        <button class="btn-icon" onclick="closeKeyModal()" style="font-size:1.1rem; line-height:1;">✕</button>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem;">
+        ऑनलाइन मोड चालू करने के लिए Google Gemini API Key की आवश्यकता होती है। यह पूरी तरह <strong>मुफ्त (Free)</strong> है।
       </p>
-      <input type="password" id="geminiKeyInput" placeholder="Paste your AI Studio API key here" />
-      <div class="modal-actions">
+      <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 10px; padding: 12px; margin-bottom: 1rem; font-size: 0.85rem; line-height: 1.5; color: #bae6fd;">
+        <strong style="color: #38bdf8;">🌐 3 सरल चरणों में मुफ्त API Key प्राप्त करें:</strong><br>
+        1. <strong><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #67e8f9; text-decoration: underline; font-weight: 600;">Google AI Studio (aistudio.google.com) ↗</a></strong> खोलें।<br>
+        2. अपने Google अकाउंट से लॉगिन करें और <strong>"Create API key"</strong> पर क्लिक करें।<br>
+        3. प्राप्त की गई की (उदा. <code>AIzaSy...</code>) को कॉपी करके नीचे पेस्ट करें।
+      </div>
+      <input type="password" id="geminiKeyInput" placeholder="यहाँ API Key पेस्ट करें (e.g. AIzaSy...)" style="width: 100%; box-sizing: border-box; margin-bottom: 0.5rem; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text);" />
+      <div id="keyFeedback" style="font-size: 0.85rem; margin-bottom: 0.75rem; display: none;"></div>
+      <div class="modal-actions" style="margin-top: 1rem;">
         <button class="btn-secondary" onclick="closeKeyModal()">रद्द करें (Cancel)</button>
-        <button class="btn-primary" onclick="saveGeminiKey()">सुरक्षित करें (Save)</button>
+        <button class="btn-primary" onclick="saveGeminiKey()">सुरक्षित करें और ऑनलाइन मोड चालू करें 🚀</button>
       </div>
     </div>
   </div>
@@ -1614,27 +1651,66 @@ INDEX_HTML = """<!DOCTYPE html>
     function closeKeyModal() { document.getElementById('keyModal').classList.remove('active'); }
 
     async function checkKeyStatus() {
-      const r = await fetch('/api/status');
-      const st = await r.json();
-      const text = document.getElementById('keyStatusText');
-      if (st.hasKey) {
-        text.textContent = "Gemini AI Active ✨";
-        text.style.color = "#34d399";
-      } else {
-        text.textContent = "Set API Key";
-        text.style.color = "#fcd34d";
+      try {
+        const r = await fetch('/api/status');
+        const st = await r.json();
+        const text = document.getElementById('keyStatusText');
+        const badgeBox = document.getElementById('badgeContainer');
+        if (st.hasKey) {
+          text.textContent = "🟢 Online AI Active";
+          text.style.color = "#34d399";
+          if (badgeBox && !badgeBox.dataset.hasResult) {
+            badgeBox.innerHTML = '<span class="badge badge-ai">🟢 Online AI Engine Ready</span>';
+          }
+        } else {
+          text.textContent = "🟠 Go Online (API Key)";
+          text.style.color = "#fcd34d";
+          if (badgeBox && !badgeBox.dataset.hasResult) {
+            badgeBox.innerHTML = '<span class="badge badge-offline">Offline Engine (Tap "Go Online" above)</span>';
+          }
+        }
+      } catch (e) {
+        console.error("Status check failed", e);
       }
     }
 
     async function saveGeminiKey() {
       const key = document.getElementById('geminiKeyInput').value.trim();
-      await fetch('/api/set-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: key })
-      });
-      closeKeyModal();
-      checkKeyStatus();
+      const feedback = document.getElementById('keyFeedback');
+      if (!key) {
+        feedback.style.display = 'block';
+        feedback.style.color = '#f87171';
+        feedback.textContent = '⚠️ कृपया अपनी Gemini API Key पेस्ट करें!';
+        return;
+      }
+      
+      feedback.style.display = 'block';
+      feedback.style.color = '#38bdf8';
+      feedback.textContent = 'सत्यापित और सुरक्षित किया जा रहा है...';
+
+      try {
+        const resp = await fetch('/api/set-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: key })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          feedback.style.color = '#34d399';
+          feedback.textContent = '✅ शानदार! API Key सुरक्षित हो गई और ऑनलाइन मोड सक्रिय हो गया है!';
+          setTimeout(() => {
+            closeKeyModal();
+            checkKeyStatus();
+            feedback.style.display = 'none';
+          }, 1200);
+        } else {
+          feedback.style.color = '#f87171';
+          feedback.textContent = data.error || 'त्रुटि: की सुरक्षित नहीं हो सकी।';
+        }
+      } catch (err) {
+        feedback.style.color = '#f87171';
+        feedback.textContent = 'सर्वर से संपर्क करने में असमर्थ।';
+      }
     }
 
     window.onload = init;
@@ -1676,10 +1752,10 @@ class PahadiServerHandler(http.server.BaseHTTPRequestHandler):
             self._set_headers()
             self.wfile.write(json.dumps(EMERGENCY_CONTACTS).encode("utf-8"))
         elif path == "/api/status":
-            key = os.environ.get("GEMINI_API_KEY", "").strip()
-            has_key = bool(key and key != "MY_GEMINI_API_KEY")
+            key = get_gemini_api_key()
+            has_key = bool(key)
             self._set_headers()
-            self.wfile.write(json.dumps({"hasKey": has_key}).encode("utf-8"))
+            self.wfile.write(json.dumps({"hasKey": has_key, "online": has_key}).encode("utf-8"))
         else:
             self._set_headers("text/plain", 404)
             self.wfile.write(b"Not Found")
@@ -1697,8 +1773,8 @@ class PahadiServerHandler(http.server.BaseHTTPRequestHandler):
 
             # Try Gemini API if key is set, else use offline engine
             result = None
-            key = os.environ.get("GEMINI_API_KEY", "").strip()
-            if key and key != "MY_GEMINI_API_KEY":
+            key = get_gemini_api_key()
+            if key:
                 try:
                     result = gemini_translate(query, dialect_code, is_reverse)
                 except Exception as e:
@@ -1717,8 +1793,8 @@ class PahadiServerHandler(http.server.BaseHTTPRequestHandler):
             history = body.get("history", [])
 
             reply = None
-            key = os.environ.get("GEMINI_API_KEY", "").strip()
-            if key and key != "MY_GEMINI_API_KEY":
+            key = get_gemini_api_key()
+            if key:
                 try:
                     reply = gemini_chat(history, msg, mode, dialect_code)
                 except Exception as e:
@@ -1731,7 +1807,7 @@ class PahadiServerHandler(http.server.BaseHTTPRequestHandler):
                     f"नमस्कार जी! ({d['displayNameHindi']})\n"
                     f"आपका संदेश प्राप्त हुआ: \"{msg}\"।\n\n"
                     f"वर्तमान में AI सेवा ऑफलाइन मोड में संचालित है। "
-                    f"यदि आप पूर्ण संवादी AI का उपयोग करना चाहते हैं, तो ऊपर 'Gemini Key' बटन से अपनी API कुंजी दर्ज करें। "
+                    f"ऑनलाइन संवादी AI (Online Mode) को सक्रिय करने के लिए ऊपर 'Go Online' बटन पर क्लिक करके अपनी Gemini API Key दर्ज करें, या .env फ़ाइल में सेट करें। "
                     f"तब तक आप अनुवादक, प्रामाणिक वाक्यांश और लोकधरोहर का आनंद ले सकते हैं!"
                 )
 
@@ -1740,18 +1816,20 @@ class PahadiServerHandler(http.server.BaseHTTPRequestHandler):
 
         elif path == "/api/set-key":
             new_key = body.get("key", "").strip()
-            if new_key:
+            if new_key and new_key not in PLACEHOLDER_KEYS:
                 os.environ["GEMINI_API_KEY"] = new_key
                 # Also save to .env
                 env_path = os.path.join(os.path.dirname(__file__), ".env")
                 try:
                     with open(env_path, "w", encoding="utf-8") as f:
-                        f.write(f"GEMINI_API_KEY={new_key}\n")
+                        f.write(f"# Pahadi AI Assistant Configuration\nGEMINI_API_KEY={new_key}\n")
                 except Exception as e:
                     print(f"Could not persist to .env: {e}")
-
-            self._set_headers()
-            self.wfile.write(json.dumps({"success": True}).encode("utf-8"))
+                self._set_headers()
+                self.wfile.write(json.dumps({"success": True}).encode("utf-8"))
+            else:
+                self._set_headers(status=400)
+                self.wfile.write(json.dumps({"success": False, "error": "अमान्य API Key"}).encode("utf-8"))
 
         else:
             self._set_headers("text/plain", 404)
