@@ -55,4 +55,41 @@ class ExampleRobolectricTest {
     assertNotNull(resultHaal)
     assertTrue(resultHaal.translatedText.contains("हाल-चाल") || resultHaal.translatedText.contains("कैसे"))
   }
+
+  @Test
+  fun `verify room persistence for chat and cultural qa`() = kotlinx.coroutines.runBlocking {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val db = com.example.data.local.PahadiDatabase.getInstance(context)
+    val chatDao = db.chatDao()
+
+    chatDao.clearAllMessages()
+
+    val testMsg = com.example.data.local.ChatMessageEntity(
+        clientMessageId = "msg_123",
+        sessionId = "cultural_session_1",
+        sessionTitle = "चितई गोलू देवता संवाद",
+        text = "चितई गोलू देवता को न्याय का देवता क्यों कहा जाता है?",
+        isUser = true,
+        appMode = "STANDARD",
+        isCulturalQa = true
+    )
+    chatDao.insertMessage(testMsg)
+
+    val count = chatDao.getMessageCount()
+    assertEquals(1, count)
+
+    val answerMsg = com.example.data.local.ChatMessageEntity(
+        clientMessageId = "msg_124",
+        sessionId = "cultural_session_1",
+        sessionTitle = "चितई गोलू देवता संवाद",
+        text = "अल्मोड़ा के चितई गोलू देवता को कुमाऊं में न्याय का प्रतीक माना जाता है।",
+        isUser = false,
+        appMode = "STANDARD",
+        isCulturalQa = true
+    )
+    chatDao.insertMessage(answerMsg)
+
+    val updatedCount = chatDao.getMessageCount()
+    assertEquals(2, updatedCount)
+  }
 }

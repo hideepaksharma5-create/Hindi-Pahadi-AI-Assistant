@@ -6,12 +6,13 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [TranslationEntity::class, CulturalNoteEntity::class],
-    version = 1,
+    entities = [TranslationEntity::class, CulturalNoteEntity::class, ChatMessageEntity::class],
+    version = 2,
     exportSchema = false
 )
 abstract class PahadiDatabase : RoomDatabase() {
     abstract fun translationDao(): TranslationDao
+    abstract fun chatDao(): ChatDao
 
     companion object {
         @Volatile
@@ -23,7 +24,7 @@ abstract class PahadiDatabase : RoomDatabase() {
                     context.applicationContext,
                     PahadiDatabase::class.java,
                     "pahadi_ai_database"
-                ).fallbackToDestructiveMigration()
+                ).fallbackToDestructiveMigration(true)
                     .build()
                 INSTANCE = instance
                 instance

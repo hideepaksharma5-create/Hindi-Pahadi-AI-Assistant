@@ -3,9 +3,11 @@ package com.example.ui.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.data.local.ChatMessageEntity
 import com.example.data.local.CulturalNoteEntity
 import com.example.data.local.PahadiDatabase
 import com.example.data.local.TranslationEntity
+import com.example.data.local.toChatMessage
 import com.example.data.model.AppMode
 import com.example.data.model.ChatMessage
 import com.example.data.model.CulturalStory
@@ -27,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -83,17 +86,35 @@ class PahadiViewModel(application: Application) : AndroidViewModel(application) 
     private val _isCurrentSaved = MutableStateFlow(false)
     val isCurrentSaved: StateFlow<Boolean> = _isCurrentSaved.asStateFlow()
 
-    // ----------------- Chat (Pahadi Voice AI) State -----------------
-    private val _chatMessages = MutableStateFlow<List<ChatMessage>>(
-        listOf(
-            ChatMessage(
-                id = "welcome_msg",
-                text = "नमस्कार! जय देव! 🙏\n\n🎤 \"बोलो, Pahadi AI समझेगा!\"\nआप हिंदी या अपनी पहाड़ी बोली (कांगड़ी, मंडीयाली, कुल्लवी, शिमला, चम्बियाली, गढ़वाली आदि) में बोलकर पूछ सकते हैं।\n\nऊपर से मोड चुनें: बुजुर्ग मित्र | छात्र | किसान | सामान्य",
-                isUser = false
+    // ----------------- Room Persisted Chat (Pahadi Voice AI & Cultural Q&A) -----------------
+    val chatMessages: StateFlow<List<ChatMessage>> = repository.getAllChatMessages()
+        .map { entities ->
+            if (entities.isEmpty()) {
+                listOf(
+                    ChatMessage(
+                        id = "welcome_msg",
+                        text = "नमस्कार! जय देव! 🙏\n\n🎤 \"बोलो, Pahadi AI समझेगा!\"\nआप हिंदी या अपनी पहाड़ी बोली (कांगड़ी, मंडीयाली, कुल्लवी, शिमला, चम्बियाली, गढ़वाली आदि) में बोलकर पूछ सकते हैं।\n\nऊपर से मोड चुनें: बुजुर्ग मित्र | छात्र | किसान | सामान्य",
+                        isUser = false
+                    )
+                )
+            } else {
+                entities.map { it.toChatMessage() }
+            }
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            listOf(
+                ChatMessage(
+                    id = "welcome_msg",
+                    text = "नमस्कार! जय देव! 🙏\n\n🎤 \"बोलो, Pahadi AI समझेगा!\"\nआप हिंदी या अपनी पहाड़ी बोली (कांगड़ी, मंडीयाली, कुल्लवी, शिमला, चम्बियाली, गढ़वाली आदि) में बोलकर पूछ सकते हैं।\n\nऊपर से मोड चुनें: बुजुर्ग मित्र | छात्र | किसान | सामान्य",
+                    isUser = false
+                )
             )
         )
-    )
-    val chatMessages: StateFlow<List<ChatMessage>> = _chatMessages.asStateFlow()
+
+    val culturalQaSessions: StateFlow<List<ChatMessageEntity>> = repository.getCulturalQaSessions()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _isChatGenerating = MutableStateFlow(false)
     val isChatGenerating: StateFlow<Boolean> = _isChatGenerating.asStateFlow()
@@ -135,6 +156,9 @@ class PahadiViewModel(application: Application) : AndroidViewModel(application) 
 
     init {
         updatePhrasebook()
+        viewModelScope.launch {
+            repository.ensureDefaultWelcomeMessage()
+        }
     }
 
     // ----------------- Personalization Actions -----------------
@@ -152,7 +176,9 @@ class PahadiViewModel(application: Application) : AndroidViewModel(application) 
             isUser = false,
             appMode = mode
         )
-        _chatMessages.value = _chatMessages.value + systemNote
+        viewModelScope.launch {
+            repository.saveChatMessage(systemNote)
+        }
         if (_autoSpeakEnabled.value) {
             speakText(modeAnnouncement)
         }
@@ -293,14 +319,19 @@ class PahadiViewModel(application: Application) : AndroidViewModel(application) 
             appMode = _appMode.value,
             relatedDialect = _targetDialect.value
         )
-        _chatMessages.value = _chatMessages.value + userMsg
         _chatInput.value = ""
 
         viewModelScope.launch {
+            repository.saveChatMessage(
+                message = userMsg,
+                sessionId = "cultural_qa_session",
+                isCulturalQa = isCulturalQuestion(query)
+            )
             _isChatGenerating.value = true
             try {
+                val currentHistory = chatMessages.value
                 val reply = repository.askPahadiAi(
-                    history = _chatMessages.value,
+                    history = currentHistory,
                     question = query,
                     mode = _appMode.value,
                     dialect = _targetDialect.value,
@@ -313,7 +344,11 @@ class PahadiViewModel(application: Application) : AndroidViewModel(application) 
                     appMode = _appMode.value,
                     relatedDialect = _targetDialect.value
                 )
-                _chatMessages.value = _chatMessages.value + aiMsg
+                repository.saveChatMessage(
+                    message = aiMsg,
+                    sessionId = "cultural_qa_session",
+                    isCulturalQa = isCulturalQuestion(query)
+                )
 
                 if (_autoSpeakEnabled.value) {
                     speakText(reply)
@@ -322,6 +357,23 @@ class PahadiViewModel(application: Application) : AndroidViewModel(application) 
                 _isChatGenerating.value = false
             }
         }
+    }
+
+    fun clearChatHistory() {
+        viewModelScope.launch {
+            repository.clearChatHistory()
+            repository.ensureDefaultWelcomeMessage()
+        }
+    }
+
+    private fun isCulturalQuestion(text: String): Boolean {
+        val lower = text.lowercase()
+        val keywords = listOf(
+            "संस्कृति", "त्योहार", "मेला", "मंदिर", "देवता", "गीत", "इतिहास", "पहाड़",
+            "परंपरा", "धाम", "सिड्डू", "नाटी", "मिंजर", "दशहरा", "जातर", "फूलदेई",
+            "कांगड़ा", "मंडी", "कुल्लू", "चंबा", "गढ़वाल", "कुमाऊं", "culture", "festival", "temple"
+        )
+        return keywords.any { lower.contains(it) }
     }
 
     // ----------------- Phrasebook Actions -----------------

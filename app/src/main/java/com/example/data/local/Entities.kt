@@ -28,3 +28,49 @@ data class CulturalNoteEntity(
     val content: String,
     val timestamp: Long = System.currentTimeMillis()
 )
+
+@Entity(tableName = "chat_messages")
+data class ChatMessageEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val clientMessageId: String,
+    val sessionId: String = "cultural_qa_session",
+    val sessionTitle: String = "पहाड़ी संवाद व सांस्कृतिक Q&A",
+    val text: String,
+    val isUser: Boolean,
+    val timestamp: Long = System.currentTimeMillis(),
+    val appMode: String = "STANDARD",
+    val relatedDialectCode: String? = null,
+    val isCulturalQa: Boolean = false
+)
+
+fun ChatMessageEntity.toChatMessage(): com.example.data.model.ChatMessage {
+    val mode = try {
+        com.example.data.model.AppMode.valueOf(appMode)
+    } catch (_: Exception) {
+        com.example.data.model.AppMode.STANDARD
+    }
+    val dialect = relatedDialectCode?.let { com.example.data.model.PahadiDialect.fromCode(it) }
+    return com.example.data.model.ChatMessage(
+        id = clientMessageId.ifEmpty { id.toString() },
+        text = text,
+        isUser = isUser,
+        timestamp = timestamp,
+        appMode = mode,
+        relatedDialect = dialect
+    )
+}
+
+fun com.example.data.model.ChatMessage.toEntity(sessionId: String = "cultural_qa_session", isCulturalQa: Boolean = false): ChatMessageEntity {
+    return ChatMessageEntity(
+        clientMessageId = id,
+        sessionId = sessionId,
+        sessionTitle = "पहाड़ी संवाद व सांस्कृतिक Q&A",
+        text = text,
+        isUser = isUser,
+        timestamp = timestamp,
+        appMode = appMode.name,
+        relatedDialectCode = relatedDialect?.code,
+        isCulturalQa = isCulturalQa
+    )
+}

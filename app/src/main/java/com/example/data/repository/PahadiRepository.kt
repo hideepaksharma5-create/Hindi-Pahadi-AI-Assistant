@@ -1,9 +1,11 @@
 package com.example.data.repository
 
 import com.example.data.dictionary.PahadiOfflineEngine
+import com.example.data.local.ChatMessageEntity
 import com.example.data.local.CulturalNoteEntity
 import com.example.data.local.PahadiDatabase
 import com.example.data.local.TranslationEntity
+import com.example.data.local.toEntity
 import com.example.data.model.AppMode
 import com.example.data.model.ChatMessage
 import com.example.data.model.CulturalStory
@@ -20,10 +22,43 @@ import kotlinx.coroutines.flow.Flow
 class PahadiRepository(private val database: PahadiDatabase) {
 
     private val dao = database.translationDao()
+    private val chatDao = database.chatDao()
 
     fun getAllHistory(): Flow<List<TranslationEntity>> = dao.getAllHistory()
     fun getFavorites(): Flow<List<TranslationEntity>> = dao.getFavorites()
     fun getAllNotes(): Flow<List<CulturalNoteEntity>> = dao.getAllNotes()
+
+    // Chat and Cultural Q&A persistence
+    fun getAllChatMessages(): Flow<List<ChatMessageEntity>> = chatDao.getAllMessages()
+    fun getCulturalQaSessions(): Flow<List<ChatMessageEntity>> = chatDao.getCulturalQaMessages()
+
+    suspend fun saveChatMessage(
+        message: ChatMessage,
+        sessionId: String = "cultural_qa_session",
+        isCulturalQa: Boolean = false
+    ): Long {
+        return chatDao.insertMessage(message.toEntity(sessionId, isCulturalQa))
+    }
+
+    suspend fun clearChatHistory() {
+        chatDao.clearAllMessages()
+    }
+
+    suspend fun ensureDefaultWelcomeMessage() {
+        if (chatDao.getMessageCount() == 0) {
+            chatDao.insertMessage(
+                ChatMessageEntity(
+                    clientMessageId = "welcome_msg",
+                    sessionId = "cultural_qa_session",
+                    sessionTitle = "पहाड़ी संवाद व सांस्कृतिक Q&A",
+                    text = "नमस्कार! जय देव! 🙏\n\n🎤 \"बोलो, Pahadi AI समझेगा!\"\nआप हिंदी या अपनी पहाड़ी बोली (कांगड़ी, मंडीयाली, कुल्लवी, शिमला, चम्बियाली, गढ़वाली आदि) में बोलकर पूछ सकते हैं।\n\nऊपर से मोड चुनें: बुजुर्ग मित्र | छात्र | किसान | सामान्य",
+                    isUser = false,
+                    appMode = "STANDARD",
+                    isCulturalQa = true
+                )
+            )
+        }
+    }
 
     suspend fun insertNote(title: String, dialect: String, content: String) {
         dao.insertNote(CulturalNoteEntity(title = title, dialect = dialect, content = content))
