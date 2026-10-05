@@ -1934,7 +1934,7 @@ INDEX_HTML = """<!DOCTYPE html>
         if (parentMsg) parentMsg.classList.add('speaking-bubble');
       }
 
-      const stopBtn = document.getElementById('globalStopTtsBtn');
+ss      const stopBtn = document.getElementById('globalStopTtsBtn');
       if (stopBtn) stopBtn.style.display = 'inline-flex';
 
       // 1. Cloned Voice Mode
