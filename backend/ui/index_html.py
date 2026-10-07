@@ -1,1697 +1,1645 @@
 # -*- coding: utf-8 -*-
-"""Himalayan Glassmorphism Web App UI"""
+"""
+Himalayan Pine & Saffron Themed Web Application UI
+Integrated with Gemini AI Backend, Dialect Translation, Voice Synthesis,
+Living Heritage Glossary, and Emergency Services.
+"""
 
 INDEX_HTML = """<!DOCTYPE html>
 <html lang="hi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pahadi AI - पहाड़ी संगम (AI Assistant & Translator)</title>
+  <title>हिमाचली व हिन्दी AI सहायक | Pahadi-Hindi AI Assistant</title>
   <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#0a130e" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+
+  <!-- Fonts: Inter & Noto Sans Devanagari -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Yantramanav:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: rgba(30, 41, 59, 0.7);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --accent-primary: #38bdf8;
-      --accent-emerald: #10b981;
-      --accent-amber: #f59e0b;
-      --accent-rose: #f43f5e;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --input-bg: rgba(15, 23, 42, 0.6);
-      --radius: 16px;
-      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+      --pine-900: #072213;
+      --pine-800: #0b391f;
+      --pine-700: #134e2c;
+      --pine-500: #228b53;
+      --saffron-500: #e58e26;
+      --saffron-400: #f39c12;
+      --bg-dark: #0a130e;
+      --surface-glass: rgba(16, 37, 26, 0.82);
+      --surface-border: rgba(255, 255, 255, 0.12);
+      --text-main: #f5f6fa;
+      --text-muted: #a4b0be;
+      --user-bubble: #174229;
+      --bot-bubble: rgba(22, 45, 33, 0.9);
+      --radius-lg: 16px;
+      --radius-sm: 8px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans Devanagari', 'Inter', -apple-system, sans-serif;
+    }
+
     body {
-      font-family: 'Outfit', 'Yantramanav', sans-serif;
-      background: radial-gradient(circle at top right, #1e1b4b, #0f172a 60%, #020617);
-      color: var(--text);
-      min-height: 100vh;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(19, 78, 44, 0.4) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(229, 142, 38, 0.18) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(7, 34, 19, 0.6) 0%, transparent 80%);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Layout Sidebar */
+    .sidebar {
+      width: 320px;
+      background: var(--surface-glass);
+      backdrop-filter: blur(16px);
+      border-right: 1px solid var(--surface-border);
       display: flex;
       flex-direction: column;
-    }
-
-    header {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--card-border);
-      padding: 1rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 50;
+      padding: 20px;
+      gap: 16px;
+      z-index: 20;
+      transition: transform 0.3s ease;
+      overflow-y: auto;
     }
 
     .brand {
       display: flex;
       align-items: center;
       gap: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .brand-icon {
-      font-size: 2rem;
-      background: linear-gradient(135deg, #38bdf8, #818cf8);
-      border-radius: 12px;
-      padding: 4px 8px;
-    }
-    .brand h1 {
-      font-size: 1.4rem;
-      font-weight: 700;
-      background: linear-gradient(to right, #38bdf8, #a5b4fc, #f472b6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .brand p { font-size: 0.8rem; color: var(--text-muted); }
 
-    .header-actions {
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--saffron-500), var(--pine-500));
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(229, 142, 38, 0.3);
+      flex-shrink: 0;
+    }
+
+    .brand-title h1 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .brand-title p {
+      font-size: 0.75rem;
+      color: var(--saffron-400);
+      font-weight: 500;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 100px;
+      background: rgba(34, 139, 83, 0.2);
+      border: 1px solid rgba(34, 139, 83, 0.4);
+      color: #4ade80;
+    }
+    .status-pill.offline {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: #fcd34d;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .section-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .persona-select {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--surface-border);
+      color: var(--text-main);
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+    }
+    .persona-select option {
+      background: #0f241a;
+      color: #fff;
+    }
+
+    .dialect-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 38vh;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .dialect-list::-webkit-scrollbar {
+      width: 4px;
+    }
+    .dialect-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    .dialect-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--surface-border);
+      color: var(--text-main);
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+      font-size: 0.86rem;
+      text-align: left;
+    }
+
+    .dialect-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--pine-500);
+      transform: translateX(2px);
+    }
+
+    .dialect-btn.active {
+      background: linear-gradient(90deg, rgba(19, 78, 44, 0.9), rgba(11, 57, 31, 0.95));
+      border-color: var(--saffron-500);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .dialect-badge {
+      font-size: 0.68rem;
+      padding: 2px 6px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .dialect-btn.active .dialect-badge {
+      background: var(--saffron-500);
+      color: #111;
+      font-weight: bold;
+    }
+
+    .sidebar-actions {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--surface-border);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.84rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Main Chat Area */
+    .main-chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: transparent;
+    }
+
+    .chat-header {
+      padding: 14px 22px;
+      background: var(--surface-glass);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--surface-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .header-left {
       display: flex;
       align-items: center;
       gap: 12px;
     }
 
-    .nav-tabs {
-      display: flex;
-      background: rgba(30, 41, 59, 0.8);
-      border-radius: 100px;
-      padding: 4px;
-      border: 1px solid var(--card-border);
-    }
-    .nav-tab {
-      padding: 8px 16px;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      border-radius: 100px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      font-size: 0.9rem;
-    }
-    .nav-tab.active {
-      background: linear-gradient(135deg, #0284c7, #2563eb);
+    .mobile-menu-btn {
+      display: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--surface-border);
       color: #fff;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      font-size: 1.1rem;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
     }
 
-    .btn-key {
-      background: rgba(245, 158, 11, 0.15);
-      color: #fcd34d;
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      padding: 8px 14px;
-      border-radius: 100px;
-      font-size: 0.85rem;
+    .current-dialect-info h2 {
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .current-dialect-info p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-icon-top {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--surface-border);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
+      transition: 0.2s;
+    }
+    .btn-icon-top:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .btn-icon-top.active-toggle {
+      background: rgba(229, 142, 38, 0.25);
+      border-color: var(--saffron-500);
+      color: var(--saffron-400);
+    }
+
+    /* Translation Banner / Direct Switcher */
+    .view-switcher-bar {
+      padding: 8px 22px;
+      background: rgba(11, 57, 31, 0.35);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.82rem;
+    }
+
+    .view-tabs {
+      display: flex;
+      gap: 6px;
+    }
+    .view-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 100px;
+      cursor: pointer;
+      font-size: 0.78rem;
       transition: all 0.2s;
     }
-    .btn-key:hover { background: rgba(245, 158, 11, 0.25); }
-
-    main {
-      flex: 1;
-      max-width: 1200px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 1.5rem 1rem;
+    .view-tab.active {
+      background: var(--pine-700);
+      color: #fff;
+      border-color: rgba(34, 139, 83, 0.6);
     }
 
-    .tab-content { display: none; }
-    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+    /* Chat Messages */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .message {
+      max-width: 78%;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      animation: fadeIn 0.25s ease-out;
+    }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Common Card */
-    .card {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      box-shadow: var(--shadow);
-      margin-bottom: 1.5rem;
-    }
-
-    /* Translator Tab */
-    .translator-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
-    @media (max-width: 768px) {
-      .translator-grid { grid-template-columns: 1fr; }
-      header { flex-direction: column; gap: 12px; }
-      .nav-tabs { flex-wrap: wrap; justify-content: center; }
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-    .dialect-select {
-      background: var(--input-bg);
-      color: var(--text);
-      border: 1px solid var(--card-border);
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      outline: none;
-      cursor: pointer;
-    }
-    .dialect-select option { background: #1e293b; color: #fff; }
-
-    textarea {
-      width: 100%;
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text);
-      border-radius: 12px;
-      padding: 1rem;
-      font-size: 1rem;
-      font-family: inherit;
-      resize: vertical;
-      min-height: 120px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    textarea:focus { border-color: var(--accent-primary); }
-
-    .action-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 1rem;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      color: white;
-      border: none;
-      padding: 10px 24px;
-      border-radius: 10px;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .btn-primary:hover { transform: translateY(-1px); filter: brightness(1.1); }
-
-    .btn-icon {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--card-border);
-      color: var(--text);
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      transition: all 0.2s;
-    }
-    .btn-icon:hover { background: rgba(255, 255, 255, 0.15); }
-    .btn-icon.recording { background: var(--accent-rose); animation: pulse 1.5s infinite; }
-
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6); }
-      70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
-    }
-
-    .result-box {
-      background: rgba(15, 23, 42, 0.5);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      min-height: 120px;
-    }
-    .result-text { font-size: 1.3rem; font-weight: 600; color: #38bdf8; margin-bottom: 0.5rem; }
-    .phonetic-text { font-size: 0.95rem; color: #a5b4fc; font-style: italic; margin-bottom: 1rem; }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 100px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-    .badge-ai { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
-    .badge-offline { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-
-    .context-card {
-      margin-top: 1rem;
-      background: rgba(30, 41, 59, 0.4);
-      border-left: 4px solid var(--accent-amber);
-      padding: 0.75rem 1rem;
-      border-radius: 0 8px 8px 0;
-      font-size: 0.85rem;
-      line-height: 1.5;
-    }
-    .context-card h5 { color: #fcd34d; margin-bottom: 4px; }
-
-    /* Chat Tab */
-    .chat-container {
-      display: flex;
-      flex-direction: column;
-      height: 72vh;
-    }
-    .mode-bar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 1rem;
-      overflow-x: auto;
-      padding-bottom: 6px;
-    }
-    .mode-chip {
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      padding: 6px 14px;
-      border-radius: 100px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s;
-    }
-    .mode-chip.active {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: var(--accent-primary);
-      color: #38bdf8;
-      font-weight: 600;
-    }
-
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      background: rgba(15, 23, 42, 0.4);
-      border-radius: 12px;
-      border: 1px solid var(--card-border);
-    }
-    .message {
-      max-width: 80%;
-      padding: 0.9rem 1.2rem;
-      border-radius: 16px;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      animation: fadeIn 0.2s ease;
-    }
     .message.user {
       align-self: flex-end;
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      color: white;
-      border-bottom-right-radius: 4px;
     }
-    .message.assistant {
+
+    .message.bot {
       align-self: flex-start;
-      background: rgba(30, 41, 59, 0.8);
-      border: 1px solid var(--card-border);
-      border-bottom-left-radius: 4px;
-      transition: border-color 0.3s, box-shadow 0.3s;
     }
-    .message.assistant.speaking-bubble {
-      border-color: rgba(56, 189, 248, 0.6);
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
-    }
-    .msg-content {
-      line-height: 1.6;
+
+    .bubble {
+      padding: 13px 18px;
+      border-radius: var(--radius-lg);
+      font-size: 0.94rem;
+      line-height: 1.55;
+      border: 1px solid var(--surface-border);
+      position: relative;
       word-break: break-word;
+      white-space: pre-wrap;
     }
-    .msg-content strong {
-      color: #fcd34d;
+
+    .message.user .bubble {
+      background: var(--user-bubble);
+      border-bottom-right-radius: 4px;
+      border-color: rgba(34, 139, 83, 0.5);
+      color: #fff;
     }
-    .msg-actions {
+
+    .message.bot .bubble {
+      background: var(--bot-bubble);
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    }
+
+    .pronunciation {
+      font-size: 0.8rem;
+      color: var(--saffron-400);
+      font-style: italic;
+      margin-top: 8px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.12);
+      padding-top: 6px;
+    }
+
+    .cultural-context-box {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      margin-top: 6px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border-left: 2px solid var(--saffron-500);
+    }
+
+    .message-meta {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      padding: 0 4px;
     }
-    .btn-tts {
+
+    .action-icon-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.78rem;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      margin-top: 8px;
-      padding: 5px 12px;
-      font-size: 0.8rem;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      color: #93c5fd;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      user-select: none;
-    }
-    .btn-tts:hover {
-      background: rgba(56, 189, 248, 0.2);
-      border-color: #38bdf8;
-      color: #ffffff;
-      transform: translateY(-1px);
-    }
-    .btn-tts.speaking {
-      background: rgba(239, 68, 68, 0.25);
-      border-color: #ef4444;
-      color: #fca5a5;
-      animation: pulseSpeaking 1.5s infinite ease-in-out;
-    }
-    @keyframes pulseSpeaking {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-      50% { box-shadow: 0 0 10px 2px rgba(239, 68, 68, 0.6); }
+      gap: 4px;
+      transition: color 0.2s;
     }
 
-    .chat-input-bar {
-      display: flex;
-      gap: 10px;
-      margin-top: 1rem;
+    .action-icon-btn:hover {
+      color: #fff;
     }
-    .chat-input-bar input {
-      flex: 1;
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text);
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-size: 1rem;
-      outline: none;
-    }
-    .chat-input-bar input:focus { border-color: var(--accent-primary); }
 
-    /* Grid cards for Phrasebook & Lore */
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 1.25rem;
-    }
-    .phrase-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 1.25rem;
-      transition: transform 0.2s;
-    }
-    .phrase-card:hover { transform: translateY(-2px); border-color: rgba(56, 189, 248, 0.4); }
-    .phrase-target { font-size: 1.15rem; font-weight: 600; color: #38bdf8; margin: 6px 0; }
-    .phrase-phonetic { font-size: 0.85rem; color: #a5b4fc; font-style: italic; margin-bottom: 8px; }
-    .phrase-meta { font-size: 0.8rem; color: var(--text-muted); }
-
-    /* Emergency Contacts */
-    .emergency-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-    .emergency-card {
-      background: rgba(244, 63, 94, 0.08);
-      border: 1px solid rgba(244, 63, 94, 0.2);
-      border-radius: 12px;
-      padding: 1rem;
-      display: flex;
+    .typing-indicator {
+      display: inline-flex;
       align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+    }
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--saffron-400);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Translator Tab View (Dedicated Mode) */
+    .translator-view {
+      display: none;
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .translator-view.active {
+      display: flex;
+    }
+
+    .trans-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 768px) {
+      .trans-grid { grid-template-columns: 1fr; }
+    }
+
+    .trans-card {
+      background: var(--bot-bubble);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
       gap: 12px;
     }
-    .emergency-card .num { font-size: 1.4rem; font-weight: 700; color: #fda4af; }
 
-    /* Modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
-      z-index: 100;
+    .trans-card textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      color: #fff;
+      padding: 12px;
+      font-size: 0.95rem;
+      min-height: 140px;
+      outline: none;
+      resize: vertical;
+    }
+    .trans-card textarea:focus {
+      border-color: var(--saffron-500);
+    }
+
+    /* Chat Input Bar */
+    .chat-input-bar {
+      padding: 14px 22px;
+      background: var(--surface-glass);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--surface-border);
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      gap: 8px;
+      transition: border-color 0.2s;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: var(--saffron-500);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .chat-textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 0.94rem;
+      outline: none;
+      resize: none;
+      max-height: 120px;
+      min-height: 24px;
+      line-height: 1.45;
+    }
+
+    .mic-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+    .mic-btn:hover {
+      color: #fff;
+    }
+    .mic-btn.recording {
+      color: #ef4444;
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.2); }
+    }
+
+    .send-btn {
+      background: linear-gradient(135deg, var(--saffron-500), var(--pine-500));
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      color: #fff;
+      display: flex;
       align-items: center;
       justify-content: center;
-      padding: 1rem;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: transform 0.1s, opacity 0.2s;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(229, 142, 38, 0.3);
     }
-    .modal-overlay.active { display: flex; }
-    .modal-box {
-      background: #1e293b;
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 1.5rem;
-      max-width: 540px;
+
+    .send-btn:active {
+      transform: scale(0.94);
+    }
+
+    /* Modal Overlay & Dialogs */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 99;
+      padding: 16px;
+    }
+
+    .modal-card {
+      background: #0d2217;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
       width: 100%;
-      max-height: 88vh;
+      max-width: 580px;
+      max-height: 82vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      animation: modalIn 0.25s ease-out;
+    }
+
+    @keyframes modalIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--surface-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-body {
+      padding: 16px 20px;
       overflow-y: auto;
-      box-shadow: var(--shadow);
-      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
-    .modal-box h3 { margin-bottom: 0.8rem; color: #fcd34d; }
-    .modal-box input {
+
+    .dict-entry {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .dict-word {
+      font-weight: 600;
+      color: var(--saffron-400);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .dict-meaning {
+      font-size: 0.88rem;
+      color: #e2e8f0;
+      margin-top: 4px;
+    }
+    .dict-note {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .key-input {
       width: 100%;
-      background: #0f172a;
-      border: 1px solid var(--card-border);
-      color: white;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--surface-border);
+      color: #fff;
       padding: 10px 14px;
-      border-radius: 8px;
-      margin-bottom: 1.25rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
       outline: none;
     }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
-    .btn-secondary {
-      background: transparent;
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      padding: 8px 16px;
-      border-radius: 8px;
+    .key-input:focus {
+      border-color: var(--saffron-500);
+    }
+
+    .btn-primary-action {
+      background: linear-gradient(135deg, var(--saffron-500), var(--pine-500));
+      border: none;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
       cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    /* Voice Recording Modal */
+    .audio-visualizer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      height: 60px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: var(--radius-sm);
+      margin: 10px 0;
+    }
+    .visualizer-bar {
+      width: 6px;
+      height: 20px;
+      background: var(--saffron-400);
+      border-radius: 3px;
+      transition: height 0.1s ease;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        position: absolute;
+        left: -330px;
+        height: 100%;
+        box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+      }
+      .sidebar.open {
+        transform: translateX(330px);
+      }
+      .mobile-menu-btn {
+        display: block;
+      }
+      .message {
+        max-width: 90%;
+      }
+      .header-actions {
+        display: none;
+      }
     }
   </style>
 </head>
 <body>
 
-  <header>
+  <!-- Sidebar / Dialect Switcher -->
+  <aside class="sidebar" id="sidebar">
     <div class="brand">
       <div class="brand-icon">🏔️</div>
-      <div>
-        <h1>Pahadi AI (पहाड़ी संगम)</h1>
-        <p>Himalayan Dialect Assistant & Cultural Translator</p>
+      <div class="brand-title">
+        <h1>पहाड़ी-हिन्दी AI</h1>
+        <p>Himalayan Dialects Assistant</p>
       </div>
     </div>
 
-    <div class="header-actions">
-      <nav class="nav-tabs">
-        <button class="nav-tab active" onclick="switchTab('translator')">🔄 अनुवादक (Translator)</button>
-        <button class="nav-tab" onclick="switchTab('chat')">💬 पहाड़ी मित्र (Chat)</button>
-        <button class="nav-tab" onclick="switchTab('phrasebook')">📖 वाक्यांश (Phrasebook)</button>
-        <button class="nav-tab" onclick="switchTab('heritage')">🏛️ धरोहर व ज्ञान</button>
-      </nav>
+    <div>
+      <div class="section-label">
+        <span>सिस्टम स्थिति</span>
+        <span class="status-pill offline" id="statusPill">
+          <span class="status-dot"></span>
+          <span id="statusText">ऑफ़लाइन</span>
+        </span>
+      </div>
+      <select id="personaModeSelect" class="persona-select" onchange="changePersonaMode(this.value)">
+        <option value="standard">🏔️ सर्व-सहायक मोड (Standard)</option>
+        <option value="elder">👵 बुजुर्ग मित्र मोड (Elder Friendly)</option>
+        <option value="student">📚 छात्र सहायक मोड (Student Helper)</option>
+        <option value="farmer">🍎 बागवान व किसान मित्र (Apple Farmer)</option>
+      </select>
+    </div>
 
-      <button class="btn-key" id="voiceCloneNavBtn" onclick="openVoiceCloneModal()" style="background: rgba(139, 92, 246, 0.15); border-color: #8b5cf6; color: #c4b5fd;">
-        <span id="voiceCloneStatusIcon">🎙️</span> <span id="voiceCloneStatusText">मेरी आवाज़ (Voice)</span>
+    <div>
+      <div class="section-label">
+        <span>बोली चुनें (Select Dialect)</span>
+        <span id="dialectCount" style="font-size:0.68rem; color:var(--saffron-400);">10 बोलियां</span>
+      </div>
+      <div class="dialect-list" id="dialectList">
+        <button class="dialect-btn active" onclick="setDialect('hindi', 'मानक हिन्दी', 'राजभाषा / Standard Hindi', this)">
+          <span>मानक हिन्दी</span>
+          <span class="dialect-badge">Hindi</span>
+        </button>
+        <button class="dialect-btn" onclick="setDialect('kangri', 'कांगड़ी (Kangri)', 'कांगड़ा घाटी, हमीरपुर, ऊना', this)">
+          <span>कांगड़ी (Kangri)</span>
+          <span class="dialect-badge">Kangra</span>
+        </button>
+        <button class="dialect-btn" onclick="setDialect('mandeali', 'मंडीयाली (Mandeali)', 'मंडी, सुंदरनगर, छोटी काशी', this)">
+          <span>मंडीयाली (Mandeali)</span>
+          <span class="dialect-badge">Mandi</span>
+        </button>
+        <button class="dialect-btn" onclick="setDialect('kullui', 'कुल्लवी (Kullui)', 'कुल्लू घाटी, मनाली, बंजार', this)">
+          <span>कुल्लवी (Kullui)</span>
+          <span class="dialect-badge">Kullu</span>
+        </button>
+        <button class="dialect-btn" onclick="setDialect('shimla_pahari', 'शिमला / महासूवी', 'शिमला, ठियोग, कोटखाई, रोहड़ू', this)">
+          <span>महासूवी (Mahasuvi)</span>
+          <span class="dialect-badge">Shimla</span>
+        </button>
+        <button class="dialect-btn" onclick="setDialect('chambeali', 'चम्बियाली (Chambeali)', 'चंबा, रावी घाटी, भरमौर', this)">
+          <span>चम्बियाली (Chambeali)</span>
+          <span class="dialect-badge">Chamba</span>
+        </button>
+        <button class="dialect-btn" onclick="setDialect('sirmauri', 'सिरमौरी (Sirmauri)', 'नाहन, रेणुका जी, गिरि-पार (हाटी)', this)">
+          <span>सिरमौरी (Sirmauri)</span>
+          <span class="dialect-badge">Sirmaur</span>
+        </button>
+        <button class="dialect-btn" onclick="setDialect('garhwali', 'गढ़वाली (Garhwali)', 'श्रीनगर, पौड़ी, टिहरी, चमोली', this)">
+          <span>गढ़वाली (Garhwali)</span>
+          <span class="dialect-badge">Garhwal</span>
+        </button>
+        <button class="dialect-btn" onclick="setDialect('kumaoni', 'कुमाऊँनी (Kumaoni)', 'अल्मोड़ा, नैनीताल, पिथौरागढ़', this)">
+          <span>कुमाऊँनी (Kumaoni)</span>
+          <span class="dialect-badge">Kumaon</span>
+        </button>
+        <button class="dialect-btn" onclick="setDialect('dogri', 'डोगरी (Dogri)', 'जम्मू व शिवालिक क्षेत्र', this)">
+          <span>डोगरी (Dogri)</span>
+          <span class="dialect-badge">Dogri</span>
+        </button>
+        <button class="dialect-btn" onclick="setDialect('jaunsari', 'जौनसारी (Jaunsari)', 'जौनसार-बावर, चकराता', this)">
+          <span>जौनसारी (Jaunsari)</span>
+          <span class="dialect-badge">Jaunsar</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-actions">
+      <button class="btn-secondary" onclick="openGlossaryModal()">
+        📖 शब्दकोश व वाक्यांश (Glossary)
       </button>
-
-      <button class="btn-key" onclick="openKeyModal()">
-        <span>🔑</span> <span id="keyStatusText">Gemini Key</span>
+      <button class="btn-secondary" onclick="openHeritageModal()">
+        🏛️ लोक धरोहर व कहानियां (Lore)
+      </button>
+      <button class="btn-secondary" onclick="openEmergencyModal()">
+        🚨 आपातकालीन नंबर (Helplines)
+      </button>
+      <button class="btn-secondary" onclick="openVoiceModal()">
+        🎙️ आवाज़ क्लोनिंग (Custom Voice)
+      </button>
+      <button class="btn-secondary" style="border-color:rgba(229, 142, 38, 0.4);" onclick="openKeyModal()">
+        🔑 API Key सेट करें
       </button>
     </div>
-  </header>
+  </aside>
 
-  <main>
-    <!-- TAB 1: TRANSLATOR -->
-    <div id="tab-translator" class="tab-content active">
-      <div class="translator-grid">
-        <!-- Input Side -->
-        <div class="card">
-          <div class="panel-header">
-            <h3 id="inputTitle">मानक हिंदी (Hindi)</h3>
-            <button class="btn-icon" onclick="swapDirection()" title="दिशा बदलें (Swap Direction)">⇄</button>
-          </div>
-          <textarea id="sourceInput" placeholder="यहाँ वाक्य लिखें या माइक दबाकर बोलें... (e.g. आप कैसे हैं? / आज बर्फ पड़ रही है)"></textarea>
-          <div class="action-row">
-            <div style="display: flex; gap: 8px;">
-              <button id="micBtn" class="btn-icon" onclick="toggleSpeech()" title="बोलें (Speak)">🎙️</button>
-              <button class="btn-icon" onclick="clearInput()" title="साफ करें">🧹</button>
-            </div>
-            <button class="btn-primary" onclick="doTranslate()">अनुवाद करें (Translate) ✨</button>
+  <!-- Main Chat & Workspace Area -->
+  <main class="main-chat">
+    <header class="chat-header">
+      <div class="header-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="current-dialect-info">
+          <h2 id="currentDialectTitle">मानक हिन्दी <span>•</span> <small style="font-size:0.8rem; color:var(--saffron-400);">सक्रिय</small></h2>
+          <p id="currentDialectSub">राजभाषा / Standard Hindi</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-icon-top" id="phoneticsToggleBtn" onclick="togglePronunciation()">🔤 उच्चारण (Phonetics)</button>
+        <button class="btn-icon-top" onclick="switchView('translator')">🔄 सीधा अनुवादक</button>
+        <button class="btn-icon-top" onclick="clearChat()">🗑️ साफ़ करें</button>
+      </div>
+    </header>
+
+    <!-- Mode Banner -->
+    <div class="view-switcher-bar">
+      <div class="view-tabs">
+        <button class="view-tab active" id="tabChat" onclick="switchView('chat')">💬 संवाद (AI Chat)</button>
+        <button class="view-tab" id="tabTrans" onclick="switchView('translator')">🔤 अनुवादक (Translator)</button>
+      </div>
+      <div style="color:var(--saffron-400); font-size:0.75rem;" id="activePersonaBadge">
+        मोड: सर्व-सहायक
+      </div>
+    </div>
+
+    <!-- Chat Messages Stream -->
+    <div class="chat-messages" id="chatMessages">
+      <div class="message bot">
+        <div class="bubble">
+          नमस्कार जी! 🙏 पहाड़ी संगम AI में आपका स्वागत है।
+          
+आप अपनी पसंदीदा पहाड़ी बोली (कांगड़ी, मण्डीयाली, कुल्लवी, शिमला/महासूवी, गढ़वाली, कुमाऊँनी, आदि) या मानक हिन्दी में सवाल पूछ सकते हैं, अनुवाद कर सकते हैं, या सेब बागवानी और पर्यटन की जानकारी प्राप्त कर सकते हैं।
+          <div class="pronunciation" style="display:none;">
+            Namaskar ji! Pahadi Sangam AI mein aapka swagat hai.
           </div>
         </div>
-
-        <!-- Output Side -->
-        <div class="card">
-          <div class="panel-header">
-            <h3 id="outputTitle">पहाड़ी बोली (Pahadi Dialect)</h3>
-            <select id="dialectSelect" class="dialect-select" onchange="onDialectChange()">
-              <!-- Options populated by JS -->
-            </select>
-          </div>
-          <div class="result-box">
-            <div id="badgeContainer"><span class="badge badge-offline">Offline Engine Active</span></div>
-            <div id="translatedOutput" class="result-text">अनुवाद यहाँ दिखाई देगा...</div>
-            <div id="phoneticOutput" class="phonetic-text"></div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:8px;">
-              <button id="speakResultBtn" class="btn-tts" onclick="speakTranslation()" title="उच्चारण सुनें (Listen)" style="display:none;">
-                <span class="tts-icon">🔊</span> <span class="tts-label">सुनें (Read Aloud)</span>
-              </button>
-              <button class="mode-chip voiceModeToggleBtn" onclick="toggleVoiceMode()" title="आवाज़ बदलें">
-                🎙️ आवाज़: <span class="voiceModeLabel" style="color:#c084fc; font-weight:600;">मेरी आवाज़ (Cloned) ✨</span>
-              </button>
-            </div>
-          </div>
-
-          <div id="contextCard" class="context-card" style="display:none;">
-            <h5>सांस्कृतिक संदर्भ (Cultural Context):</h5>
-            <p id="contextText"></p>
-            <div id="etiquetteBox" style="margin-top: 6px; color: #a5b4fc;"></div>
-          </div>
+        <div class="message-meta">
+          <span>AI सहायक</span>
+          <button class="action-icon-btn" onclick="speakText(this)">🔊 बोलें</button>
+          <button class="action-icon-btn" onclick="copyText(this)">📋 कॉपी</button>
         </div>
       </div>
     </div>
 
-    <!-- TAB 2: CHAT (PAHADI MITRA) -->
-    <div id="tab-chat" class="tab-content">
-      <div class="card chat-container">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom: 0.8rem;">
-          <div class="mode-bar" style="margin-bottom:0; flex:1;">
-            <button class="mode-chip active" onclick="setChatMode('standard', this)">🌟 सर्वज्ञ मित्र (Standard)</button>
-            <button class="mode-chip" onclick="setChatMode('elder', this)">👴 बुजुर्ग मित्र (Elder Friendly)</button>
-            <button class="mode-chip" onclick="setChatMode('farmer', this)">🍎 किसान व बागवान (Apple/Farm)</button>
-            <button class="mode-chip" onclick="setChatMode('student', this)">📚 छात्र सहायक (Student)</button>
-          </div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <button class="mode-chip voiceModeToggleBtn" onclick="toggleVoiceMode()" title="आवाज़ चुनें (डिफ़ॉल्ट या आपकी क्लोन आवाज़)">
-              🎙️ आवाज़: <span class="voiceModeLabel" style="color:#c084fc; font-weight:600;">मेरी आवाज़ (Cloned) ✨</span>
-            </button>
-            <button id="autoReadToggle" class="mode-chip" onclick="toggleAutoRead()" title="उत्तर मिलते ही अपने-आप आवाज़ में बोलकर सुनाएं">
-              🔊 ऑटो-रीड: <span id="autoReadStatus" style="color:#f87171; font-weight:600;">बंद</span>
-            </button>
-            <button id="globalStopTtsBtn" class="mode-chip" onclick="stopAllSpeech()" style="display:none; background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #fca5a5;" title="आवाज़ तुरंत बंद करें">
-              ⏹️ बोलना रोकें
-            </button>
-          </div>
+    <!-- Dedicated Direct Translator View -->
+    <div class="translator-view" id="translatorView">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="color:#fff;">द्वि-दिशा पहाड़ी अनुवादक (Bidirectional Translator)</h3>
+        <label style="font-size:0.85rem; color:var(--saffron-400); cursor:pointer;">
+          <input type="checkbox" id="reverseTranslateCheck" onchange="toggleTranslateDirection()"> पहाड़ी ➔ हिन्दी (Reverse)
+        </label>
+      </div>
+      <div class="trans-grid">
+        <div class="trans-card">
+          <label style="font-weight:600; color:var(--text-muted);" id="transSourceLabel">स्रोत पाठ (हिंदी):</label>
+          <textarea id="transInput" placeholder="यहाँ टेक्स्ट लिखें (उदा: आप कैसे हैं? / मौसम कैसा है?)"></textarea>
+          <button class="btn-primary-action" onclick="handleDirectTranslate()">अनुवाद करें (Translate)</button>
         </div>
-
-        <div id="chatMessages" class="chat-messages">
-          <div class="message assistant">
-            <div class="msg-content">नमस्कार जी! पैलाग! मैं <strong>'पहाड़ी मित्र'</strong> हूँ। आप मुझसे हिमाचली व गढ़वाली-कुमाऊंनी बोलियों, सेब के बगीचों, पारंपरिक धाम, लोककथाओं या सामान्य सहायता के बारे में पूछ सकते हैं।</div>
-            <div class="msg-actions">
-              <button class="btn-tts" onclick="speakChatMessage(this)" title="बोलकर सुनाएं (Read Aloud)">
-                <span class="tts-icon">🔊</span> <span class="tts-label">सुनें (Read Aloud)</span>
-              </button>
-            </div>
+        <div class="trans-card">
+          <label style="font-weight:600; color:var(--text-muted);" id="transTargetLabel">अनुवाद परिणाम (पहाड़ी):</label>
+          <div id="transOutput" style="background:rgba(0,0,0,0.3); border:1px solid var(--surface-border); border-radius:var(--radius-sm); padding:14px; min-height:140px; color:#fff; font-size:1.05rem; white-space:pre-wrap;">
+            परिणाम यहाँ दिखाई देगा...
           </div>
-        </div>
-
-        <div class="chat-input-bar">
-          <input type="text" id="chatInput" placeholder="पहाड़ी मित्र से कुछ भी पूछें... (Enter दबाएं)" onkeydown="if(event.key==='Enter') sendChatMessage()" />
-          <button class="btn-icon" onclick="toggleChatMic()" title="बोलें">🎙️</button>
-          <button class="btn-primary" onclick="sendChatMessage()">भेजें</button>
+          <div id="transPhonetic" style="font-size:0.85rem; color:var(--saffron-400); font-style:italic;"></div>
+          <div id="transContext" class="cultural-context-box" style="display:none;"></div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 3: PHRASEBOOK -->
-    <div id="tab-phrasebook" class="tab-content">
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
-          <h2>📖 प्रामाणिक पहाड़ी वाक्यांश (Curated Phrasebook)</h2>
-          <select id="phraseDialectFilter" class="dialect-select" onchange="renderPhrases()">
-            <option value="all">सभी बोलियाँ (All Dialects)</option>
-          </select>
-        </div>
-        <div id="phraseGrid" class="grid-2">
-          <!-- Filled by JS -->
-        </div>
+    <!-- Chat Input Bar -->
+    <div class="chat-input-bar" id="chatInputBar">
+      <div class="input-wrapper">
+        <button class="mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" title="आवाज़ से बोलें (Voice Input)">🎙️</button>
+        <textarea 
+          id="userInput" 
+          class="chat-textarea" 
+          rows="1" 
+          placeholder="यहाँ सन्देश लिखें या प्रश्न पूछें... (उदा: सेब की प्रूनिंग कब करें? / तुसीं किद्दां हो?)" 
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"></textarea>
       </div>
-    </div>
-
-    <!-- TAB 4: HERITAGE & KNOWLEDGE -->
-    <div id="tab-heritage" class="tab-content">
-      <div class="card">
-        <h2>🚨 महत्वपूर्ण आपातकालीन संपर्क (Emergency Services)</h2>
-        <div id="emergencyGrid" class="emergency-grid"></div>
-      </div>
-
-      <div class="card">
-        <h2>🏔️ स्थानीय ज्ञान व सरकारी योजनाएं (Knowledge & Schemes)</h2>
-        <div id="knowledgeGrid" class="grid-2" style="margin-top: 1rem;"></div>
-      </div>
-
-      <div class="card">
-        <h2>📜 लोककथाएं व सांस्कृतिक धरोहर (Folk Lore & Legends)</h2>
-        <div id="storiesGrid" class="grid-2" style="margin-top: 1rem;"></div>
-      </div>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
     </div>
   </main>
 
-  <!-- KEY MODAL -->
-  <div id="keyModal" class="modal-overlay">
-    <div class="modal-box" style="max-width: 520px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.8rem;">
-        <h3 style="margin:0;">🔑 ऑनलाइन मोड सक्रिय करें (Activate Online Mode)</h3>
-        <button class="btn-icon" onclick="closeKeyModal()" style="font-size:1.1rem; line-height:1;">✕</button>
+  <!-- Glossary Modal -->
+  <div class="modal-overlay" id="glossaryModal" onclick="closeAllModals(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 style="color:#fff;">📖 पहाड़ी-हिन्दी शब्दकोश व प्रामाणिक वाक्यांश</h3>
+        <button class="btn-secondary" style="padding:4px 10px;" onclick="closeModal('glossaryModal')">✕</button>
       </div>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem;">
-        ऑनलाइन मोड चालू करने के लिए Google Gemini API Key की आवश्यकता होती है। यह पूरी तरह <strong>मुफ्त (Free)</strong> है।
-      </p>
-      <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 10px; padding: 12px; margin-bottom: 1rem; font-size: 0.85rem; line-height: 1.5; color: #bae6fd;">
-        <strong style="color: #38bdf8;">🌐 3 सरल चरणों में मुफ्त API Key प्राप्त करें:</strong><br>
-        1. <strong><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #67e8f9; text-decoration: underline; font-weight: 600;">Google AI Studio (aistudio.google.com) ↗</a></strong> खोलें।<br>
-        2. अपने Google अकाउंट से लॉगिन करें और <strong>"Create API key"</strong> पर क्लिक करें।<br>
-        3. प्राप्त की गई की (उदा. <code>AIzaSy...</code>) को कॉपी करके नीचे पेस्ट करें।
+      <div style="padding:10px 20px 0; display:flex; gap:8px;">
+        <input type="text" id="glossarySearch" class="key-input" placeholder="वाक्यांश या शब्द खोजें..." oninput="filterGlossary()" />
       </div>
-      <input type="password" id="geminiKeyInput" placeholder="यहाँ API Key पेस्ट करें (e.g. AIzaSy...)" style="width: 100%; box-sizing: border-box; margin-bottom: 0.5rem; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text);" />
-      <div id="keyFeedback" style="font-size: 0.85rem; margin-bottom: 0.75rem; display: none;"></div>
-      <div class="modal-actions" style="margin-top: 1rem;">
-        <button class="btn-secondary" onclick="closeKeyModal()">रद्द करें (Cancel)</button>
-        <button class="btn-primary" onclick="saveGeminiKey()">सुरक्षित करें और ऑनलाइन मोड चालू करें 🚀</button>
+      <div class="modal-body" id="glossaryBody">
+        <div style="color:var(--text-muted); text-align:center; padding:20px;">लोड हो रहा है...</div>
       </div>
     </div>
   </div>
 
-  <!-- VOICE CLONE MODAL -->
-  <div id="voiceCloneModal" class="modal-overlay" onclick="if(event.target===this) closeVoiceCloneModal()">
-    <div class="modal-box" style="max-width: 540px; position: relative;">
-      <!-- Pinned Floating Close Button - Never scrolls out of view -->
-      <button type="button" class="btn-cut-modal" onclick="closeVoiceCloneModal()" title="विंडो बंद करें (Cut / Close)" style="position: absolute; top: 12px; right: 14px; z-index: 99; background: #ef4444; color: white; border: none; border-radius: 8px; padding: 6px 14px; font-weight: 700; font-size: 0.88rem; cursor: pointer; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); display: flex; align-items: center; gap: 4px;">
-        ✕ कट करें (Cut)
-      </button>
-
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.8rem; padding-right: 120px;">
-        <h3 style="margin:0; color: #c084fc; font-size: 1.15rem;">🎙️ आवाज़ क्लोन स्टूडियो (Voice Studio)</h3>
+  <!-- Heritage Lore Modal -->
+  <div class="modal-overlay" id="heritageModal" onclick="closeAllModals(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 style="color:#fff;">🏛️ हिमालयी लोक धरोहर एवं कथाएं</h3>
+        <button class="btn-secondary" style="padding:4px 10px;" onclick="closeModal('heritageModal')">✕</button>
       </div>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.8rem; line-height: 1.5;">
-        AI को अपनी आवाज़ में बोलने के लिए सिखाएं। नीचे माइक बटन दबाकर 8-10 सेकंड का अपना वॉइस सैंपल रिकॉर्ड करें, या अपनी मनपसंद न्यूरल आवाज़ शैली चुनें।
-      </p>
-
-      <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 10px; padding: 12px; margin-bottom: 0.85rem; font-size: 0.88rem; color: #fde68a;">
-        <strong>📖 रिकॉर्ड करते समय इस वाक्य को बोलें:</strong><br>
-        <em>"नमस्कार जी! मैं पहाड़ी संगम AI सहायक का उपयोग कर रहा हूँ। यह मेरी अपनी आवाज़ का नमूना है।"</em>
+      <div class="modal-body" id="heritageBody">
+        <div style="color:var(--text-muted); text-align:center; padding:20px;">लोड हो रहा है...</div>
       </div>
+    </div>
+  </div>
 
-      <!-- Neural Preset Selector -->
-      <div style="margin-bottom: 0.85rem; text-align: left;">
-        <label style="font-size: 0.85rem; font-weight: 600; color: #c084fc; display: block; margin-bottom: 0.4rem;">
-          🎭 आवाज़ की शैली (AI Neural Voice Preset):
-        </label>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="voicePresetsContainer">
-          <label style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; font-size:0.82rem;">
-            <input type="radio" name="voicePreset" value="fenrir" onchange="onVoicePresetChange('fenrir')">
-            <span>🦁 गंभीर पुरुष (Fenrir)</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; font-size:0.82rem;">
-            <input type="radio" name="voicePreset" value="puck" onchange="onVoicePresetChange('puck')">
-            <span>⚡ उत्साही युवा (Puck)</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; font-size:0.82rem;">
-            <input type="radio" name="voicePreset" value="aoede" onchange="onVoicePresetChange('aoede')">
-            <span>🌸 सौम्य स्त्री (Aoede)</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; font-size:0.82rem;">
-            <input type="radio" name="voicePreset" value="kore" checked onchange="onVoicePresetChange('kore')">
-            <span>🌺 स्पष्ट मधुर (Kore)</span>
-          </label>
+  <!-- Emergency Contacts Modal -->
+  <div class="modal-overlay" id="emergencyModal" onclick="closeAllModals(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 style="color:#fff;">🚨 आपातकालीन व आपदा प्रबंधन हेल्पलाइन</h3>
+        <button class="btn-secondary" style="padding:4px 10px;" onclick="closeModal('emergencyModal')">✕</button>
+      </div>
+      <div class="modal-body" id="emergencyBody">
+        <div style="color:var(--text-muted); text-align:center; padding:20px;">लोड हो रहा है...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Key Modal -->
+  <div class="modal-overlay" id="keyModal" onclick="closeAllModals(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 style="color:#fff;">🔑 Google Gemini API Key</h3>
+        <button class="btn-secondary" style="padding:4px 10px;" onclick="closeModal('keyModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.85rem; color:var(--text-muted);">
+          Google AI Studio से प्राप्त मुफ़्त API Key दर्ज करें। Key आपके स्थानीय सिस्टम में सुरक्षित रूप से संरक्षित रहेगी।
+        </p>
+        <input type="password" id="apiKeyInput" class="key-input" placeholder="AIzaSy..." />
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--saffron-400); font-size:0.82rem; text-decoration:none;">
+            + मुफ़्त Key प्राप्त करें ↗
+          </a>
+          <button class="btn-primary-action" onclick="saveApiKey()">सुरक्षित करें (Save)</button>
         </div>
-        <div id="detectedPitchInfo" style="display:none; font-size:0.82rem; color:#38bdf8; margin-top:6px; font-weight:500;"></div>
+        <div id="keyFeedback" style="font-size:0.82rem; margin-top:6px;"></div>
       </div>
+    </div>
+  </div>
 
-      <!-- Live Recorder Panel -->
-      <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.25rem; text-align: center; margin-bottom: 1rem;">
-        <div id="recordTimer" style="font-size: 1.8rem; font-weight: 700; color: #38bdf8; margin-bottom: 0.4rem;">00:00</div>
-        <div id="recordStatus" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">नीचे लाल बटन दबाकर बोलना शुरू करें</div>
-
-        <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-          <button id="startRecordBtn" class="btn-primary" onclick="startVoiceRecording()" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
-            🎙️ रिकॉर्ड शुरू करें (Start)
-          </button>
-          <button id="stopRecordBtn" class="btn-primary" onclick="stopVoiceRecording()" style="display: none; background: #475569;">
-            ⏹️ रिकॉर्डिंग रोकें (Stop)
-          </button>
+  <!-- Voice Cloning Modal -->
+  <div class="modal-overlay" id="voiceModal" onclick="closeAllModals(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 style="color:#fff;">🎙️ निजी आवाज़ क्लोनिंग (Voice Clone)</h3>
+        <button class="btn-secondary" style="padding:4px 10px;" onclick="closeModal('voiceModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.85rem; color:var(--text-muted);">
+          3 से 5 सेकंड तक अपनी आवाज़ में कोई भी वाक्य बोलकर रिकॉर्ड करें। सिस्टम आपके पिच को कैलिब्रेट करके AI उत्तर आपके निजी स्वर में सुनाएगा।
+        </p>
+        <div class="audio-visualizer" id="audioVisualizer">
+          <div class="visualizer-bar" style="height:15px;"></div>
+          <div class="visualizer-bar" style="height:35px;"></div>
+          <div class="visualizer-bar" style="height:22px;"></div>
+          <div class="visualizer-bar" style="height:45px;"></div>
+          <div class="visualizer-bar" style="height:18px;"></div>
         </div>
-
-        <!-- Preview player -->
-        <div id="recordedPreviewSection" style="display: none; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
-          <div style="font-size: 0.85rem; margin-bottom: 0.5rem; color: #34d399;">✅ रिकॉर्डिंग पूरी हुई! प्ले करके सुनें:</div>
-          <audio id="recordedAudioPlayer" controls style="width: 100%; height: 36px; margin-bottom: 0.75rem;"></audio>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button id="saveVoiceBtn" class="btn-primary" onclick="uploadRecordedVoice()" style="background: linear-gradient(135deg, #10b981, #059669); flex: 1; font-weight: 600;">
-              💾 यह आवाज़ AI में सुरक्षित करें (Save Voice)
-            </button>
-            <button type="button" class="btn-secondary" onclick="closeVoiceCloneModal()" style="border-color: #ef4444; color: #fca5a5; font-weight: 600; padding: 8px 16px; border-radius: 12px; background: rgba(239, 68, 68, 0.15);">
-              ✕ कट करें (Cut)
-            </button>
-          </div>
+        <div style="display:flex; gap:10px; justify-content:center; align-items:center;">
+          <button class="btn-primary-action" id="recordVoiceBtn" onclick="toggleVoiceRecord()">🔴 रिकॉर्ड शुरू करें</button>
+          <button class="btn-secondary" id="playSampleBtn" onclick="playVoiceSample()" style="display:none;">▶️ नमूना सुनें</button>
         </div>
-      </div>
-
-      <!-- File upload fallback -->
-      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; flex-wrap: wrap; gap: 6px;">
-        <span>या WAV/MP3 ऑडियो फाइल अपलोड करें:</span>
-        <input type="file" id="voiceFileInput" accept="audio/*" onchange="handleVoiceFileUpload(event)" style="font-size: 0.8rem; max-width: 190px;" />
-      </div>
-
-      <div id="voiceFeedback" style="font-size: 0.88rem; margin-top: 0.75rem; display: none; padding: 12px; border-radius: 8px; background: rgba(16, 185, 129, 0.1);"></div>
-      <div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.8rem;">
-        <span style="font-size: 0.8rem; color: var(--text-muted);">बाहर क्लिक करें, Esc दबाएं या लाल 'कट करें' दबाएं</span>
-        <button class="btn-primary" onclick="closeVoiceCloneModal()" style="background: linear-gradient(135deg, #ef4444, #dc2626); font-weight: 600; padding: 8px 18px;">
-          ✕ कट / विंडो बंद करें (Cut / Close)
-        </button>
+        <div id="voiceStatusMsg" style="font-size:0.82rem; text-align:center; color:var(--text-muted); margin-top:6px;"></div>
       </div>
     </div>
   </div>
 
   <script>
-    let dialects = [];
-    let phrases = [];
-    let isPahadiToHindi = false;
-    let currentChatMode = "standard";
+    let activeDialect = 'hindi';
+    let activeDialectName = 'मानक हिन्दी';
+    let showPhonetics = false;
+    let personaMode = 'standard';
     let chatHistory = [];
+    let isOnline = false;
+    let phrasesData = [];
+    let storiesData = [];
+    let emergencyData = [];
     let recognition = null;
-
-    async function init() {
-      // 1. Fetch Dialects
-      const dResp = await fetch('/api/dialects');
-      dialects = await dResp.json();
-      
-      const sel = document.getElementById('dialectSelect');
-      const filterSel = document.getElementById('phraseDialectFilter');
-      sel.innerHTML = '';
-      dialects.forEach(d => {
-        const opt = document.createElement('option');
-        opt.value = d.code;
-        opt.textContent = `${d.displayNameHindi} - ${d.region}`;
-        sel.appendChild(opt);
-
-        const fOpt = document.createElement('option');
-        fOpt.value = d.code;
-        fOpt.textContent = d.displayNameHindi;
-        filterSel.appendChild(fOpt);
-      });
-
-      // 2. Fetch Knowledge & Lore
-      loadEmergency();
-      loadKnowledge();
-      loadStories();
-      loadPhrases();
-
-      // Check key & voice clone status
-      checkKeyStatus();
-      checkVoiceCloneStatus();
-    }
-
-    function switchTab(name) {
-      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      
-      document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
-      document.getElementById(`tab-${name}`).classList.add('active');
-    }
-
-    function swapDirection() {
-      isPahadiToHindi = !isPahadiToHindi;
-      const inTitle = document.getElementById('inputTitle');
-      const outTitle = document.getElementById('outputTitle');
-      const dialectName = document.getElementById('dialectSelect').selectedOptions[0]?.text || "पहाड़ी बोली";
-
-      if (isPahadiToHindi) {
-        inTitle.textContent = `${dialectName} (Input)`;
-        outTitle.textContent = "मानक हिंदी (Hindi Output)";
-        document.getElementById('sourceInput').placeholder = "पहाड़ी में लिखें (e.g. आपु किद्दां आ? / तुसीं कुथी चले?)";
-      } else {
-        inTitle.textContent = "मानक हिंदी (Hindi Input)";
-        outTitle.textContent = "पहाड़ी बोली (Pahadi Output)";
-        document.getElementById('sourceInput').placeholder = "यहाँ वाक्य लिखें या माइक दबाकर बोलें...";
-      }
-    }
-
-    function onDialectChange() {
-      if (isPahadiToHindi) {
-        const dialectName = document.getElementById('dialectSelect').selectedOptions[0]?.text || "पहाड़ी बोली";
-        document.getElementById('inputTitle').textContent = `${dialectName} (Input)`;
-      }
-    }
-
-    function clearInput() {
-      document.getElementById('sourceInput').value = '';
-    }
-
-    async function doTranslate() {
-      const text = document.getElementById('sourceInput').value.trim();
-      if (!text) return;
-
-      const dialectCode = document.getElementById('dialectSelect').value;
-      const outBox = document.getElementById('translatedOutput');
-      const phoneticBox = document.getElementById('phoneticOutput');
-      const badgeBox = document.getElementById('badgeContainer');
-      const contextCard = document.getElementById('contextCard');
-
-      outBox.textContent = "अनुवाद हो रहा है...";
-      phoneticBox.textContent = "";
-
-      try {
-        const resp = await fetch('/api/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: text,
-            dialect: dialectCode,
-            isReverse: isPahadiToHindi
-          })
-        });
-
-        const data = await resp.json();
-        outBox.textContent = data.translatedText;
-        phoneticBox.textContent = data.phoneticText || "";
-        document.getElementById('speakResultBtn').style.display = 'inline-flex';
-
-        badgeBox.innerHTML = data.isAiPowered ? 
-          '<span class="badge badge-ai">✨ Gemini AI Powered</span>' : 
-          '<span class="badge badge-offline">⚡ Built-in Offline Engine</span>';
-
-        if (data.culturalContext) {
-          contextCard.style.display = 'block';
-          document.getElementById('contextText').textContent = data.culturalContext;
-          document.getElementById('etiquetteBox').textContent = data.etiquetteTip ? `💡 शिष्टाचार: ${data.etiquetteTip}` : "";
-        } else {
-          contextCard.style.display = 'none';
-        }
-
-      } catch (err) {
-        outBox.textContent = "अनुवाद में त्रुटि आई। कृपया पुनः प्रयास करें।";
-      }
-    }
-
-    function speakTranslation() {
-      const text = document.getElementById('translatedOutput').textContent;
-      if (!text || text.includes("...")) return;
-      const btn = document.getElementById('speakResultBtn');
-      speakText(text, btn);
-    }
-
-    // Speech Recognition
-    function toggleSpeech() {
-      const micBtn = document.getElementById('micBtn');
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        alert("आपका ब्राउज़र वॉइस इनपुट का समर्थन नहीं करता है। Google Chrome का उपयोग करें।");
-        return;
-      }
-
-      if (recognition) {
-        recognition.stop();
-        recognition = null;
-        micBtn.classList.remove('recording');
-        return;
-      }
-
-      recognition = new SpeechRecognition();
-      recognition.lang = 'hi-IN';
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => micBtn.classList.add('recording');
-      recognition.onresult = (e) => {
-        const transcript = e.results[0][0].transcript;
-        document.getElementById('sourceInput').value = transcript;
-        doTranslate();
-      };
-      recognition.onend = () => {
-        micBtn.classList.remove('recording');
-        recognition = null;
-      };
-      recognition.onerror = () => {
-        micBtn.classList.remove('recording');
-        recognition = null;
-      };
-      recognition.start();
-    }
-
-    // TTS & Speech Synthesis Controls
-    let currentSpeakingUtterance = null;
-    let currentSpeakingBtn = null;
-    let isAutoReadEnabled = false;
-
-    function cleanTextForSpeech(text) {
-      if (!text) return "";
-      return text
-        .replace(/\\*\\*(.*?)\\*\\*/g, '$1')     // remove bold **
-        .replace(/\\*(.*?)\\*/g, '$1')         // remove italic *
-        .replace(/#{1,6}\\s+/g, '')           // remove headings
-        .replace(/`{1,3}.*?`{1,3}/gs, '')    // remove code blocks
-        .replace(/\\[(.*?)\\]\\(.*?\\)/g, '$1')  // remove markdown links
-        .replace(/^\\s*[\\*\\-\\+•]\\s+/gm, '')   // remove bullet symbols
-        .replace(/^\\s*\\d+\\.\\s+/gm, '')       // remove numbered list prefixes
-        .replace(/\\n+/g, ' ')                // replace newlines with space
-        .trim();
-    }
-
-    function formatMarkdown(text) {
-      if (!text) return "";
-      let escaped = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-      
-      // bold **text**
-      escaped = escaped.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
-      // italic *text*
-      escaped = escaped.replace(/\\*(.*?)\\*/g, '<em>$1</em>');
-      // bullet lines
-      escaped = escaped.replace(/^[\\*\\-\\•]\\s+(.*)$/gm, '<div style="margin-left: 12px; margin-bottom: 3px;">• $1</div>');
-      // newlines to paragraphs / breaks
-      escaped = escaped.replace(/\\n\\n+/g, '<div style="margin-bottom: 0.6rem;"></div>');
-      escaped = escaped.replace(/\\n/g, '<br>');
-      return escaped;
-    }
-
-    function getHindiVoice() {
-      if (!window.speechSynthesis) return null;
-      const voices = window.speechSynthesis.getVoices();
-      if (!voices || voices.length === 0) return null;
-      
-      return voices.find(v => v.lang === 'hi-IN' || v.lang === 'hi_IN') ||
-             voices.find(v => v.lang.toLowerCase().startsWith('hi')) ||
-             voices.find(v => v.name.toLowerCase().includes('hindi')) ||
-             voices.find(v => v.lang.includes('IN')) ||
-             voices[0];
-    }
-
-    if (window.speechSynthesis) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        // Cache voices in background
-        getHindiVoice();
-      };
-    }
-
-    // Voice Clone & Audio State
-    let selectedVoiceMode = 'default'; // 'default' or 'cloned'
-    let selectedVoicePreset = 'aoede';
-    let detectedPitchHz = 200;
-    let currentAudioPlayer = null;
+    let isRecognizing = false;
     let mediaRecorder = null;
-    let recordedChunks = [];
-    let recordTimerInterval = null;
-    let recordSeconds = 0;
-    let recordedBlob = null;
-    let hasClonedVoice = false;
+    let audioChunks = [];
+    let isRecordingVoice = false;
 
-    function setVoiceMode(mode) {
-      selectedVoiceMode = mode;
-      localStorage.setItem('pahadiVoiceMode', mode);
-      
-      const labels = document.querySelectorAll('.voiceModeLabel');
-      const btns = document.querySelectorAll('.voiceModeToggleBtn, #voiceModeToggle');
-      
-      if (mode === 'cloned') {
-        labels.forEach(lbl => {
-          lbl.textContent = 'मेरी आवाज़ (Cloned) ✨';
-          lbl.style.color = '#c084fc';
-        });
-        btns.forEach(btn => {
-          btn.style.borderColor = '#c084fc';
-          btn.style.background = 'rgba(192, 132, 252, 0.2)';
-        });
-      } else {
-        labels.forEach(lbl => {
-          lbl.textContent = 'डिफ़ॉल्ट आवाज़ (Default)';
-          lbl.style.color = '#38bdf8';
-        });
-        btns.forEach(btn => {
-          btn.style.borderColor = '';
-          btn.style.background = '';
-        });
-      }
+    // Initialize on page load
+    async function init() {
+      await checkStatus();
+      await loadPhrases();
+      await loadStories();
+      await loadEmergency();
+      setupSpeechRecognition();
     }
 
-    function onVoicePresetChange(val) {
-      selectedVoicePreset = val;
-    }
-
-    function openVoiceCloneModal() {
-      document.getElementById('voiceCloneModal').classList.add('active');
-      checkVoiceCloneStatus();
-    }
-
-    function closeVoiceCloneModal() {
-      document.getElementById('voiceCloneModal').classList.remove('active');
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        stopVoiceRecording();
-      }
-    }
-
-    // Keyboard Escape key listener to cut/close modal
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeVoiceCloneModal();
-        if (typeof closeKeyModal === 'function') closeKeyModal();
-      }
-    });
-
-    async function checkVoiceCloneStatus() {
+    async function checkStatus() {
       try {
-        const resp = await fetch('/api/voice/status');
-        const data = await resp.json();
-        hasClonedVoice = data.hasVoice;
-        const icon = document.getElementById('voiceCloneStatusIcon');
-        const text = document.getElementById('voiceCloneStatusText');
-        const feedback = document.getElementById('voiceFeedback');
-        
-        if (data.profile && data.profile.voiceName) {
-          selectedVoicePreset = data.profile.voiceName;
-          const radio = document.querySelector(`input[name="voicePreset"][value="${selectedVoicePreset}"]`);
-          if (radio) radio.checked = true;
-        }
-
-        if (data.hasVoice) {
-          if (icon) icon.textContent = '🟢';
-          if (text) text.textContent = 'मेरी आवाज़ (Active)';
-
-          // If voice exists and user hasn't explicitly chosen 'default', activate cloned mode!
-          const userSavedPref = localStorage.getItem('pahadiVoiceMode');
-          if (userSavedPref !== 'default') {
-            setVoiceMode('cloned');
-          } else {
-            setVoiceMode('default');
-          }
-
-          if (feedback) {
-            feedback.style.display = 'block';
-            feedback.style.color = '#34d399';
-            feedback.style.background = 'rgba(16, 185, 129, 0.15)';
-            feedback.style.border = '1px solid #10b981';
-            feedback.innerHTML = `✅ <strong>आपकी आवाज़ सुरक्षित है</strong> (${(data.voiceSizeBytes / 1024).toFixed(1)} KB, Preset: ${selectedVoicePreset.toUpperCase()})। चैट व अनुवाद में 'मेरी आवाज़' सक्रिय है।`;
-          }
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        isOnline = data.hasKey;
+        const pill = document.getElementById('statusPill');
+        const text = document.getElementById('statusText');
+        if (isOnline) {
+          pill.className = 'status-pill';
+          text.textContent = 'ऑनलाइन (Gemini AI)';
         } else {
-          setVoiceMode('default');
-          if (icon) icon.textContent = '🎙️';
-          if (text) text.textContent = 'मेरी आवाज़ (Voice)';
+          pill.className = 'status-pill offline';
+          text.textContent = 'ऑफ़लाइन मोड (ऑफलाइन शब्दकोश)';
         }
       } catch (e) {
-        console.error("Voice status error", e);
+        console.warn('Status fetch failed', e);
       }
     }
 
-    function toggleVoiceMode() {
-      if (selectedVoiceMode === 'default') {
-        if (!hasClonedVoice) {
-          openVoiceCloneModal();
-          const feedback = document.getElementById('voiceFeedback');
-          if (feedback) {
-            feedback.style.display = 'block';
-            feedback.style.color = '#f59e0b';
-            feedback.textContent = '⚠️ कृपया पहले नीचे अपना 8-10 सेकंड का वॉइस सैंपल रिकॉर्ड या अपलोड करें!';
-          }
+    function setDialect(id, name, desc, btnEl) {
+      activeDialect = id;
+      activeDialectName = name;
+      document.querySelectorAll('.dialect-btn').forEach(btn => btn.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      document.getElementById('currentDialectTitle').innerHTML = `${name} <span>•</span> <small style="font-size:0.8rem; color:var(--saffron-400);">सक्रिय</small>`;
+      document.getElementById('currentDialectSub').textContent = desc;
+
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+      }
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    function changePersonaMode(val) {
+      personaMode = val;
+      const labels = {
+        standard: 'मोड: सर्व-सहायक',
+        elder: 'मोड: बुजुर्ग मित्र (आदरणीय व संक्षिप्त संवाद)',
+        student: 'मोड: छात्र सहायक (द्विभाषी नोट्स व स्पष्टीकरण)',
+        farmer: 'मोड: किसान व बागवान मित्र (सेब व कृषि सलाह)'
+      };
+      document.getElementById('activePersonaBadge').textContent = labels[val] || 'मोड: सर्व-सहायक';
+    }
+
+    function togglePronunciation() {
+      showPhonetics = !showPhonetics;
+      const btn = document.getElementById('phoneticsToggleBtn');
+      if (btn) btn.classList.toggle('active-toggle', showPhonetics);
+      document.querySelectorAll('.pronunciation').forEach(el => {
+        el.style.display = showPhonetics ? 'block' : 'none';
+      });
+    }
+
+    function switchView(viewName) {
+      const chatContainer = document.getElementById('chatMessages');
+      const chatInput = document.getElementById('chatInputBar');
+      const transView = document.getElementById('translatorView');
+      const tabChat = document.getElementById('tabChat');
+      const tabTrans = document.getElementById('tabTrans');
+
+      if (viewName === 'translator') {
+        chatContainer.style.display = 'none';
+        chatInput.style.display = 'none';
+        transView.classList.add('active');
+        tabTrans.classList.add('active');
+        tabChat.classList.remove('active');
+      } else {
+        chatContainer.style.display = 'flex';
+        chatInput.style.display = 'flex';
+        transView.classList.remove('active');
+        tabChat.classList.add('active');
+        tabTrans.classList.remove('active');
+      }
+    }
+
+    function autoResize(textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    }
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+
+    function clearChat() {
+      const container = document.getElementById('chatMessages');
+      container.innerHTML = `
+        <div class="message bot">
+          <div class="bubble">
+            संवाद साफ़ कर दिया गया है। आप नया प्रश्न पूछ सकते हैं!
+          </div>
+        </div>
+      `;
+      chatHistory = [];
+    }
+
+    function copyText(btn) {
+      const bubble = btn.closest('.message').querySelector('.bubble');
+      // Extract only clean text without pronunciation snippet
+      let text = '';
+      for (let node of bubble.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE) text += node.textContent;
+      }
+      text = text.trim() || bubble.innerText.trim();
+      navigator.clipboard.writeText(text);
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '✓ कॉपीड';
+      setTimeout(() => btn.innerHTML = originalText, 1500);
+    }
+
+    async function speakText(btn) {
+      const bubble = btn.closest('.message').querySelector('.bubble');
+      let text = '';
+      for (let node of bubble.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE) text += node.textContent;
+      }
+      text = text.trim() || bubble.innerText.trim();
+      if (!text) return;
+
+      btn.style.color = 'var(--saffron-400)';
+      
+      // Try Neural TTS from backend
+      try {
+        const res = await fetch('/api/voice/synthesize', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ text })
+        });
+        const data = await res.json();
+        if (data.success && data.audioUrl) {
+          const audio = new Audio(data.audioUrl);
+          audio.play();
+          audio.onended = () => btn.style.color = '';
           return;
         }
-        setVoiceMode('cloned');
-      } else {
-        setVoiceMode('default');
-      }
-    }
-
-    async function analyzeRecordedAudioPitch(blob) {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        const arrayBuf = await blob.arrayBuffer();
-        const audioBuf = await ctx.decodeAudioData(arrayBuf);
-        const chanData = audioBuf.getChannelData(0);
-        const rate = audioBuf.sampleRate;
-
-        // Autocorrelation pitch detector
-        const start = Math.floor(chanData.length * 0.25);
-        const len = Math.min(2048, Math.floor(chanData.length * 0.5));
-        let bestCorrelation = 0;
-        let bestOffset = -1;
-        const minOffset = Math.floor(rate / 350); // ~350 Hz
-        const maxOffset = Math.floor(rate / 85);  // ~85 Hz
-
-        for (let offset = minOffset; offset <= maxOffset; offset++) {
-          let diffSum = 0;
-          for (let i = 0; i < len; i++) {
-            diffSum += Math.abs(chanData[start + i] - chanData[start + i + offset]);
-          }
-          const correlation = 1 - (diffSum / len);
-          if (correlation > bestCorrelation) {
-            bestCorrelation = correlation;
-            bestOffset = offset;
-          }
-        }
-
-        if (bestOffset > 0) {
-          detectedPitchHz = Math.round(rate / bestOffset);
-        }
-        ctx.close();
-
-        // Intelligent tone mapping
-        if (detectedPitchHz < 145) {
-          selectedVoicePreset = 'fenrir';
-        } else if (detectedPitchHz < 175) {
-          selectedVoicePreset = 'puck';
-        } else if (detectedPitchHz < 215) {
-          selectedVoicePreset = 'aoede';
-        } else {
-          selectedVoicePreset = 'kore';
-        }
-
-        const radio = document.querySelector(`input[name="voicePreset"][value="${selectedVoicePreset}"]`);
-        if (radio) radio.checked = true;
-
-        const info = document.getElementById('detectedPitchInfo');
-        if (info) {
-          info.style.display = 'block';
-          info.textContent = `🎯 स्वर विश्लेषण: अनुमानित पिच ~${detectedPitchHz} Hz (सुझाया गया न्यूरल टोन: ${selectedVoicePreset.toUpperCase()})`;
-        }
       } catch (err) {
-        console.warn("Pitch analysis notice:", err);
-      }
-    }
-
-    async function startVoiceRecording() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        recordedChunks = [];
-        mediaRecorder = new MediaRecorder(stream);
-        
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data && e.data.size > 0) {
-            recordedChunks.push(e.data);
-          }
-        };
-
-        mediaRecorder.onstop = async () => {
-          recordedBlob = new Blob(recordedChunks, { type: 'audio/wav' });
-          const audioUrl = URL.createObjectURL(recordedBlob);
-          const player = document.getElementById('recordedAudioPlayer');
-          player.src = audioUrl;
-          document.getElementById('recordedPreviewSection').style.display = 'block';
-          document.getElementById('recordStatus').textContent = '✅ रिकॉर्डिंग पूरी हुई! विश्लेषण किया जा रहा है...';
-          await analyzeRecordedAudioPitch(recordedBlob);
-          document.getElementById('recordStatus').textContent = '✅ रिकॉर्डिंग पूरी हुई! नीचे प्ले करके देखें या सेव करें।';
-        };
-
-        mediaRecorder.start();
-        document.getElementById('startRecordBtn').style.display = 'none';
-        document.getElementById('stopRecordBtn').style.display = 'inline-block';
-        document.getElementById('recordedPreviewSection').style.display = 'none';
-        document.getElementById('recordStatus').textContent = '🔴 रिकॉर्ड हो रहा है... कृपया दिया गया वाक्य स्पष्ट बोलें!';
-
-        recordSeconds = 0;
-        document.getElementById('recordTimer').textContent = '00:00';
-        clearInterval(recordTimerInterval);
-        recordTimerInterval = setInterval(() => {
-          recordSeconds++;
-          const sec = recordSeconds < 10 ? '0' + recordSeconds : recordSeconds;
-          document.getElementById('recordTimer').textContent = `00:${sec}`;
-          if (recordSeconds >= 12) {
-            stopVoiceRecording();
-          }
-        }, 1000);
-
-      } catch (err) {
-        alert("माइक्रोफोन का एक्सेस नहीं मिल सका। कृपया ब्राउज़र में माइक की अनुमति दें।");
-      }
-    }
-
-    function stopVoiceRecording() {
-      clearInterval(recordTimerInterval);
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
-      }
-      document.getElementById('startRecordBtn').style.display = 'inline-block';
-      document.getElementById('stopRecordBtn').style.display = 'none';
-    }
-
-    async function uploadRecordedVoice() {
-      if (!recordedBlob) return;
-      const feedback = document.getElementById('voiceFeedback');
-      const saveBtn = document.getElementById('saveVoiceBtn');
-      if (saveBtn) {
-        saveBtn.disabled = true;
-        saveBtn.textContent = '⏳ सुरक्षित हो रहा है...';
+        console.warn('Backend TTS failed, using browser speech:', err);
       }
 
-      feedback.style.display = 'block';
-      feedback.style.color = '#38bdf8';
-      feedback.style.background = 'rgba(56, 189, 248, 0.15)';
-      feedback.style.border = '1px solid #38bdf8';
-      feedback.textContent = 'आपकी आवाज़ और न्यूरल प्रोफाइल सुरक्षित की जा रही है...';
-
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Audio = reader.result;
-        try {
-          const resp = await fetch('/api/voice/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              audioData: base64Audio,
-              voiceName: selectedVoicePreset,
-              pitchHz: detectedPitchHz
-            })
-          });
-          const data = await resp.json();
-          if (data.success) {
-            hasClonedVoice = true;
-            setVoiceMode('cloned');
-            checkVoiceCloneStatus();
-
-            feedback.style.color = '#34d399';
-            feedback.style.background = 'rgba(16, 185, 129, 0.2)';
-            feedback.style.border = '1px solid #10b981';
-            feedback.innerHTML = `
-              <div style="font-weight: 700; font-size: 1rem; margin-bottom: 4px;">🎉 बधाई! आपकी आवाज़ AI में सुरक्षित हो गई है।</div>
-              <div>अब चैट और अनुवाद दोनों में AI आपकी न्यूरल आवाज़ में बोलेगा।</div>
-              <div style="margin-top: 8px; font-size: 0.85rem; color: #a7f3d0; font-weight: 600;">
-                ⏱️ यह विंडो <strong>1.5 सेकंड में स्वतः बंद हो जाएगी</strong> (या ऊपर लाल 'कट करें' दबाएं)।
-              </div>
-            `;
-
-            if (saveBtn) {
-              saveBtn.textContent = '✅ आवाज़ सुरक्षित हो गई!';
-              saveBtn.style.background = '#10b981';
-            }
-
-            // Auto-close modal after 1.8 seconds so user is never stuck
-            setTimeout(() => {
-              closeVoiceCloneModal();
-              if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.textContent = '💾 यह आवाज़ AI में सुरक्षित करें (Save Voice)';
-                saveBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-              }
-            }, 1800);
-
-          } else {
-            feedback.style.color = '#f87171';
-            feedback.style.background = 'rgba(239, 68, 68, 0.15)';
-            feedback.style.border = '1px solid #ef4444';
-            feedback.textContent = data.error || 'आवाज़ सुरक्षित करने में त्रुटि आई।';
-            if (saveBtn) {
-              saveBtn.disabled = false;
-              saveBtn.textContent = '💾 पुनः प्रयास करें (Try Again)';
-            }
-          }
-        } catch (e) {
-          feedback.style.color = '#f87171';
-          feedback.textContent = 'सर्वर से संपर्क करने में असमर्थ।';
-          if (saveBtn) {
-            saveBtn.disabled = false;
-            saveBtn.textContent = '💾 पुनः प्रयास करें (Try Again)';
-          }
-        }
-      };
-      reader.readAsDataURL(recordedBlob);
-    }
-
-    async function handleVoiceFileUpload(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      recordedBlob = file;
-      const player = document.getElementById('recordedAudioPlayer');
-      player.src = URL.createObjectURL(file);
-      document.getElementById('recordedPreviewSection').style.display = 'block';
-      await analyzeRecordedAudioPitch(file);
-      uploadRecordedVoice();
-    }
-
-    function stopAllSpeech() {
-      if (window.speechSynthesis) {
+      // Browser Web Speech API Fallback
+      if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-      }
-      if (currentAudioPlayer) {
-        currentAudioPlayer.pause();
-        currentAudioPlayer.currentTime = 0;
-        currentAudioPlayer = null;
-      }
-      if (currentSpeakingBtn) {
-        currentSpeakingBtn.classList.remove('speaking');
-        const label = currentSpeakingBtn.querySelector('.tts-label');
-        const icon = currentSpeakingBtn.querySelector('.tts-icon');
-        if (label) label.textContent = 'सुनें (Read Aloud)';
-        if (icon) icon.textContent = '🔊';
-        const parentMsg = currentSpeakingBtn.closest('.message');
-        if (parentMsg) parentMsg.classList.remove('speaking-bubble');
-        currentSpeakingBtn = null;
-      }
-      const stopBtn = document.getElementById('globalStopTtsBtn');
-      if (stopBtn) stopBtn.style.display = 'none';
-      currentSpeakingUtterance = null;
-    }
-
-    async function speakText(rawText, btnElement = null) {
-      // If user clicks the currently active speaking button, stop it
-      if (btnElement && btnElement === currentSpeakingBtn) {
-        stopAllSpeech();
-        return;
-      }
-
-      stopAllSpeech();
-
-      const spokenText = cleanTextForSpeech(rawText);
-      if (!spokenText) return;
-
-      if (btnElement) {
-        currentSpeakingBtn = btnElement;
-        btnElement.classList.add('speaking');
-        const label = btnElement.querySelector('.tts-label');
-        const icon = btnElement.querySelector('.tts-icon');
-        if (label) label.textContent = selectedVoiceMode === 'cloned' ? '⏳ आवाज़ बन रही है...' : 'रोकें (Stop)';
-        if (icon) icon.textContent = selectedVoiceMode === 'cloned' ? '✨' : '⏹️';
-        const parentMsg = btnElement.closest('.message');
-        if (parentMsg) parentMsg.classList.add('speaking-bubble');
-      }
-
-      const stopBtn = document.getElementById('globalStopTtsBtn');
-      if (stopBtn) stopBtn.style.display = 'inline-flex';
-
-      // 1. Cloned Voice Mode (Neural TTS)
-      if (selectedVoiceMode === 'cloned') {
-        try {
-          const resp = await fetch('/api/voice/synthesize', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              text: spokenText,
-              voiceName: selectedVoicePreset
-            })
-          });
-          const data = await resp.json();
-          if (data.success && data.audioUrl) {
-            if (btnElement) {
-              const label = btnElement.querySelector('.tts-label');
-              const icon = btnElement.querySelector('.tts-icon');
-              if (label) label.textContent = 'रोकें (Stop)';
-              if (icon) icon.textContent = '⏹️';
-            }
-            if (currentAudioPlayer) {
-              currentAudioPlayer.pause();
-              currentAudioPlayer = null;
-            }
-            // Add cache-busting timestamp to audio URL so browser plays the fresh audio
-            const cacheBuster = data.audioUrl + (data.audioUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
-            currentAudioPlayer = new Audio(cacheBuster);
-            currentAudioPlayer.onended = () => stopAllSpeech();
-            currentAudioPlayer.onerror = (err) => {
-              console.error("Audio playback error:", err);
-              stopAllSpeech();
-            };
-            await currentAudioPlayer.play();
-            return;
-          } else {
-            console.warn("Cloned synthesis notice, falling back to browser voice:", data.error);
-          }
-        } catch (e) {
-          console.warn("Cloned synthesis error, falling back to browser voice:", e);
-        }
-      }
-
-      // 2. Browser Voice (Default Mode or Fallback)
-      if (!window.speechSynthesis) {
-        alert("आपका ब्राउज़र टेक्स्ट-टू-स्पीच का समर्थन नहीं करता है।");
-        stopAllSpeech();
-        return;
-      }
-
-      if (btnElement) {
-        const label = btnElement.querySelector('.tts-label');
-        const icon = btnElement.querySelector('.tts-icon');
-        if (label) label.textContent = 'रोकें (Stop)';
-        if (icon) icon.textContent = '⏹️';
-      }
-
-      const utterance = new SpeechSynthesisUtterance(spokenText);
-      const voice = getHindiVoice();
-      if (voice) {
-        utterance.voice = voice;
-        utterance.lang = voice.lang;
-      } else {
+        const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'hi-IN';
-      }
-
-      if (selectedVoiceMode === 'cloned') {
-        if (selectedVoicePreset === 'fenrir') utterance.pitch = 0.8;
-        else if (selectedVoicePreset === 'puck') utterance.pitch = 1.0;
-        else if (selectedVoicePreset === 'aoede') utterance.pitch = 1.15;
-        else if (selectedVoicePreset === 'kore') utterance.pitch = 1.25;
-      } else {
+        utterance.rate = 0.95;
         utterance.pitch = 1.0;
-      }
-
-      utterance.rate = 0.95;
-      utterance.onend = () => stopAllSpeech();
-      utterance.onerror = () => stopAllSpeech();
-
-      currentSpeakingUtterance = utterance;
-      window.speechSynthesis.speak(utterance);
-    }
-
-    function speakChatMessage(btn) {
-      const rawText = btn.dataset.rawText ? decodeURIComponent(btn.dataset.rawText) : "";
-      if (rawText) {
-        speakText(rawText, btn);
+        utterance.onend = () => btn.style.color = '';
+        window.speechSynthesis.speak(utterance);
       } else {
-        const parent = btn.closest('.message');
-        const content = parent.querySelector('.msg-content') || parent;
-        speakText(content.innerText, btn);
+        btn.style.color = '';
       }
     }
 
-    function toggleAutoRead() {
-      isAutoReadEnabled = !isAutoReadEnabled;
-      const statusSpan = document.getElementById('autoReadStatus');
-      const btn = document.getElementById('autoReadToggle');
-      if (isAutoReadEnabled) {
-        statusSpan.textContent = 'चालू 🔊';
-        statusSpan.style.color = '#34d399';
-        btn.style.borderColor = '#10b981';
-        btn.style.background = 'rgba(16, 185, 129, 0.15)';
+    // Speech-to-text Web Speech API
+    function setupSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'hi-IN';
+
+        recognition.onstart = () => {
+          isRecognizing = true;
+          document.getElementById('micBtn').classList.add('recording');
+        };
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          const input = document.getElementById('userInput');
+          input.value = transcript;
+          autoResize(input);
+        };
+        recognition.onerror = () => {
+          isRecognizing = false;
+          document.getElementById('micBtn').classList.remove('recording');
+        };
+        recognition.onend = () => {
+          isRecognizing = false;
+          document.getElementById('micBtn').classList.remove('recording');
+        };
+      }
+    }
+
+    function toggleSpeechRecognition() {
+      if (!recognition) {
+        alert('आपके ब्राउज़र में आवाज़ पहचान (Web Speech API) उपलब्ध नहीं है। कृपया Chrome या Edge का उपयोग करें।');
+        return;
+      }
+      if (isRecognizing) {
+        recognition.stop();
       } else {
-        statusSpan.textContent = 'बंद';
-        statusSpan.style.color = '#f87171';
-        btn.style.borderColor = '';
-        btn.style.background = '';
-        stopAllSpeech();
+        recognition.start();
       }
     }
 
-    // Chat functionality
-    function setChatMode(mode, btn) {
-      currentChatMode = mode;
-      document.querySelectorAll('.mode-chip').forEach(c => c.classList.remove('active'));
-      btn.classList.add('active');
-    }
-
-    async function sendChatMessage() {
-      const input = document.getElementById('chatInput');
-      const msg = input.value.trim();
-      if (!msg) return;
-      input.value = '';
+    // Send chat message to backend
+    async function sendMessage() {
+      const input = document.getElementById('userInput');
+      const text = input.value.trim();
+      if (!text) return;
 
       const container = document.getElementById('chatMessages');
-      const uDiv = document.createElement('div');
-      uDiv.className = 'message user';
-      uDiv.textContent = msg;
-      container.appendChild(uDiv);
 
-      chatHistory.push({ isUser: true, text: msg });
+      // Append User message
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user';
+      userMsg.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+      container.appendChild(userMsg);
 
-      const aDiv = document.createElement('div');
-      aDiv.className = 'message assistant';
-      aDiv.innerHTML = '<div class="msg-content" style="color: #93c5fd;">विचार कर रहा हूँ... 🏔️</div>';
-      container.appendChild(aDiv);
+      input.value = '';
+      input.style.height = 'auto';
       container.scrollTop = container.scrollHeight;
 
+      // Append typing indicator
+      const typingMsg = document.createElement('div');
+      typingMsg.className = 'message bot';
+      typingMsg.id = 'typingIndicator';
+      typingMsg.innerHTML = `
+        <div class="bubble">
+          <div class="typing-indicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>
+      `;
+      container.appendChild(typingMsg);
+      container.scrollTop = container.scrollHeight;
+
+      chatHistory.push({ role: 'user', isUser: true, text });
+
       try {
-        const resp = await fetch('/api/chat', {
+        const response = await fetch('/api/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
-            message: msg,
-            mode: currentChatMode,
-            dialect: document.getElementById('dialectSelect').value,
+            message: text,
+            dialect: activeDialect,
+            mode: personaMode,
             history: chatHistory
           })
         });
-        const data = await resp.json();
-        const formattedHtml = formatMarkdown(data.reply);
-        aDiv.innerHTML = `
-          <div class="msg-content">${formattedHtml}</div>
-          <div class="msg-actions">
-            <button class="btn-tts" onclick="speakChatMessage(this)" title="बोलकर सुनाएं (Read Aloud)">
-              <span class="tts-icon">🔊</span> <span class="tts-label">सुनें (Read Aloud)</span>
-            </button>
+
+        const data = await response.json();
+        const replyText = data.reply || "उत्तर प्राप्त नहीं हो सका। कृपया पुनः प्रयास करें।";
+        chatHistory.push({ role: 'assistant', isUser: false, text: replyText });
+
+        // Remove typing indicator
+        const typingEl = document.getElementById('typingIndicator');
+        if (typingEl) typingEl.remove();
+
+        // Bot message bubble
+        const botMsg = document.createElement('div');
+        botMsg.className = 'message bot';
+        botMsg.innerHTML = `
+          <div class="bubble">
+            ${escapeHtml(replyText)}
+            <div class="pronunciation" style="display:${showPhonetics ? 'block' : 'none'};">
+              Phonetic guidance active
+            </div>
+          </div>
+          <div class="message-meta">
+            <span>AI सहायक (${activeDialectName})</span>
+            <button class="action-icon-btn" onclick="speakText(this)">🔊 बोलें</button>
+            <button class="action-icon-btn" onclick="copyText(this)">📋 कॉपी</button>
           </div>
         `;
-        const ttsBtn = aDiv.querySelector('.btn-tts');
-        ttsBtn.dataset.rawText = encodeURIComponent(data.reply);
-        chatHistory.push({ isUser: false, text: data.reply });
+        container.appendChild(botMsg);
+        container.scrollTop = container.scrollHeight;
 
-        // Auto-read aloud if enabled
-        if (isAutoReadEnabled) {
-          speakText(data.reply, ttsBtn);
-        }
-      } catch (e) {
-        aDiv.innerHTML = '<div class="msg-content" style="color:#f87171;">क्षमा करें, प्रतिक्रिया प्राप्त करने में समस्या हुई। कृपया पुनः प्रयास करें।</div>';
+      } catch (err) {
+        console.error('Chat error:', err);
+        const typingEl = document.getElementById('typingIndicator');
+        if (typingEl) typingEl.remove();
+
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'message bot';
+        errorMsg.innerHTML = `
+          <div class="bubble" style="border-color:#ef4444;">
+            सर्वर से संपर्क करने में समस्या हुई। ऑफ़लाइन शब्दकोश उपलब्ध है।
+          </div>
+        `;
+        container.appendChild(errorMsg);
+        container.scrollTop = container.scrollHeight;
       }
-      container.scrollTop = container.scrollHeight;
     }
 
-    function toggleChatMic() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return alert("ब्राउज़र स्पीच का समर्थन नहीं करता");
-      const rec = new SpeechRecognition();
-      rec.lang = 'hi-IN';
-      rec.onresult = (e) => {
-        document.getElementById('chatInput').value = e.results[0][0].transcript;
-        sendChatMessage();
-      };
-      rec.start();
+    // Direct Bidirectional Translation
+    async function handleDirectTranslate() {
+      const input = document.getElementById('transInput').value.trim();
+      const isReverse = document.getElementById('reverseTranslateCheck').checked;
+      const outBox = document.getElementById('transOutput');
+      const phonBox = document.getElementById('transPhonetic');
+      const ctxBox = document.getElementById('transContext');
+
+      if (!input) {
+        outBox.textContent = 'कृपया अनुवाद के लिए कुछ टेक्स्ट लिखें।';
+        return;
+      }
+
+      outBox.textContent = 'अनुवाद हो रहा है...';
+      phonBox.textContent = '';
+      ctxBox.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/translate', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            query: input,
+            dialect: activeDialect,
+            isReverse: isReverse
+          })
+        });
+        const data = await res.json();
+        outBox.textContent = data.translatedText || input;
+        if (data.phoneticText) {
+          phonBox.textContent = `उच्चारण (Phonetics): ${data.phoneticText}`;
+        }
+        if (data.culturalContext) {
+          ctxBox.textContent = `💡 सांस्कृतिक संदर्भ: ${data.culturalContext}`;
+          ctxBox.style.display = 'block';
+        }
+      } catch (err) {
+        outBox.textContent = 'अनुवाद में त्रुटि हुई।';
+      }
     }
 
-    // Phrases
+    function toggleTranslateDirection() {
+      const isReverse = document.getElementById('reverseTranslateCheck').checked;
+      document.getElementById('transSourceLabel').textContent = isReverse ? `स्रोत पाठ (${activeDialectName}):` : 'स्रोत पाठ (हिंदी):';
+      document.getElementById('transTargetLabel').textContent = isReverse ? 'अनुवाद परिणाम (हिंदी):' : `अनुवाद परिणाम (${activeDialectName}):`;
+    }
+
+    // Modal Handlers
+    function openGlossaryModal() {
+      renderGlossary(phrasesData);
+      document.getElementById('glossaryModal').style.display = 'flex';
+    }
+
+    function openHeritageModal() {
+      renderHeritage(storiesData);
+      document.getElementById('heritageModal').style.display = 'flex';
+    }
+
+    function openEmergencyModal() {
+      renderEmergency(emergencyData);
+      document.getElementById('emergencyModal').style.display = 'flex';
+    }
+
+    function openKeyModal() {
+      document.getElementById('keyModal').style.display = 'flex';
+    }
+
+    function openVoiceModal() {
+      document.getElementById('voiceModal').style.display = 'flex';
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    function closeAllModals(e) {
+      if (e.target.classList.contains('modal-overlay')) {
+        e.target.style.display = 'none';
+      }
+    }
+
     async function loadPhrases() {
-      const r = await fetch('/api/phrases');
-      phrases = await r.json();
-      renderPhrases();
-    }
-
-    function renderPhrases() {
-      const filter = document.getElementById('phraseDialectFilter').value;
-      const grid = document.getElementById('phraseGrid');
-      grid.innerHTML = '';
-
-      const filtered = filter === 'all' ? phrases : phrases.filter(p => p.dialect === filter);
-      filtered.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'phrase-card';
-        card.innerHTML = `
-          <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fcd34d;">${p.categoryHindi || p.category}</span>
-          <div class="phrase-target">${p.translation}</div>
-          <div class="phrase-phonetic">${p.phonetic}</div>
-          <p style="font-size: 0.95rem; margin-bottom: 6px;"><strong>हिंदी:</strong> ${p.hindi}</p>
-          <p class="phrase-meta">💡 ${p.culturalNote}</p>
-        `;
-        grid.appendChild(card);
-      });
-    }
-
-    // Knowledge & Emergency
-    async function loadEmergency() {
-      const r = await fetch('/api/emergency');
-      const list = await r.json();
-      const grid = document.getElementById('emergencyGrid');
-      grid.innerHTML = '';
-      list.forEach(item => {
-        const el = document.createElement('div');
-        el.className = 'emergency-card';
-        el.innerHTML = `
-          <div style="font-size: 1.8rem;">${item.icon}</div>
-          <div>
-            <div class="num">${item.number}</div>
-            <strong style="font-size: 0.85rem; display: block;">${item.titleHindi}</strong>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">${item.description}</span>
-          </div>
-        `;
-        grid.appendChild(el);
-      });
-    }
-
-    async function loadKnowledge() {
-      const r = await fetch('/api/knowledge');
-      const list = await r.json();
-      const grid = document.getElementById('knowledgeGrid');
-      grid.innerHTML = '';
-      list.forEach(k => {
-        const el = document.createElement('div');
-        el.className = 'phrase-card';
-        el.innerHTML = `
-          <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">${k.category}</span>
-          <h4 style="margin: 8px 0; color: #f8fafc;">${k.title}</h4>
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">${k.summary}</p>
-          <div style="font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; white-space: pre-line;">${k.details}</div>
-        `;
-        grid.appendChild(el);
-      });
+      try {
+        const res = await fetch('/api/phrases');
+        phrasesData = await res.json();
+      } catch (e) {
+        console.warn('Phrases load failed', e);
+      }
     }
 
     async function loadStories() {
-      const r = await fetch('/api/stories');
-      const list = await r.json();
-      const grid = document.getElementById('storiesGrid');
-      grid.innerHTML = '';
-      list.forEach(s => {
-        const el = document.createElement('div');
-        el.className = 'phrase-card';
-        el.innerHTML = `
-          <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">${s.region}</span>
-          <h4 style="margin: 8px 0; color: #f8fafc;">${s.titleHindi}</h4>
-          <p style="font-size: 0.85rem; color: #a5b4fc; font-style: italic; margin-bottom: 6px;">${s.titleEnglish}</p>
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">${s.summary}</p>
-          <div style="font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; white-space: pre-line;">${s.fullStory}</div>
-        `;
-        grid.appendChild(el);
-      });
-    }
-
-    // Modal & API Key
-    function openKeyModal() { document.getElementById('keyModal').classList.add('active'); }
-    function closeKeyModal() { document.getElementById('keyModal').classList.remove('active'); }
-
-    async function checkKeyStatus() {
       try {
-        const r = await fetch('/api/status');
-        const st = await r.json();
-        const text = document.getElementById('keyStatusText');
-        const badgeBox = document.getElementById('badgeContainer');
-        if (st.hasKey) {
-          text.textContent = "🟢 Online AI Active";
-          text.style.color = "#34d399";
-          if (badgeBox && !badgeBox.dataset.hasResult) {
-            badgeBox.innerHTML = '<span class="badge badge-ai">🟢 Online AI Engine Ready</span>';
-          }
-        } else {
-          text.textContent = "🟠 Go Online (API Key)";
-          text.style.color = "#fcd34d";
-          if (badgeBox && !badgeBox.dataset.hasResult) {
-            badgeBox.innerHTML = '<span class="badge badge-offline">Offline Engine (Tap "Go Online" above)</span>';
-          }
-        }
+        const res = await fetch('/api/stories');
+        storiesData = await res.json();
       } catch (e) {
-        console.error("Status check failed", e);
+        console.warn('Stories load failed', e);
       }
     }
 
-    async function saveGeminiKey() {
-      const key = document.getElementById('geminiKeyInput').value.trim();
-      const feedback = document.getElementById('keyFeedback');
-      if (!key) {
-        feedback.style.display = 'block';
-        feedback.style.color = '#f87171';
-        feedback.textContent = '⚠️ कृपया अपनी Gemini API Key पेस्ट करें!';
+    async function loadEmergency() {
+      try {
+        const res = await fetch('/api/emergency');
+        emergencyData = await res.json();
+      } catch (e) {
+        console.warn('Emergency load failed', e);
+      }
+    }
+
+    function renderGlossary(list) {
+      const body = document.getElementById('glossaryBody');
+      if (!list || list.length === 0) {
+        body.innerHTML = '<div style="text-align:center; color:var(--text-muted);">कोई वाक्यांश नहीं मिला।</div>';
         return;
       }
-      
-      feedback.style.display = 'block';
-      feedback.style.color = '#38bdf8';
-      feedback.textContent = 'सत्यापित और सुरक्षित किया जा रहा है...';
+      body.innerHTML = list.map(item => `
+        <div class="dict-entry">
+          <div class="dict-word">
+            <span>${escapeHtml(item.hindi)} ➔ ${escapeHtml(item.translation)}</span>
+            <span style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(item.dialect || '')}</span>
+          </div>
+          <div class="dict-meaning">🗣️ <em>${escapeHtml(item.phonetic || '')}</em> | 🇬🇧 ${escapeHtml(item.english || '')}</div>
+          ${item.culturalNote ? `<div class="dict-note">💡 ${escapeHtml(item.culturalNote)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function filterGlossary() {
+      const q = document.getElementById('glossarySearch').value.toLowerCase().trim();
+      const filtered = phrasesData.filter(p => 
+        (p.hindi && p.hindi.toLowerCase().includes(q)) ||
+        (p.translation && p.translation.toLowerCase().includes(q)) ||
+        (p.phonetic && p.phonetic.toLowerCase().includes(q)) ||
+        (p.english && p.english.toLowerCase().includes(q))
+      );
+      renderGlossary(filtered);
+    }
+
+    function renderHeritage(stories) {
+      const body = document.getElementById('heritageBody');
+      if (!stories || stories.length === 0) {
+        body.innerHTML = '<div style="text-align:center; color:var(--text-muted);">कहानियां लोड नहीं हो सकीं।</div>';
+        return;
+      }
+      body.innerHTML = stories.map(s => `
+        <div class="dict-entry">
+          <div class="dict-word" style="color:var(--saffron-400); font-size:1rem;">
+            ${escapeHtml(s.titleHindi)}
+          </div>
+          <div style="font-size:0.8rem; color:var(--saffron-500); margin:2px 0;">📍 ${escapeHtml(s.region || '')}</div>
+          <p style="font-size:0.88rem; line-height:1.5; color:#e2e8f0; margin-top:6px;">${escapeHtml(s.fullStory || s.summary || '')}</p>
+          ${s.culturalSignificance ? `<div class="dict-note" style="margin-top:6px;">🌟 <strong>सांस्कृतिक महत्व:</strong> ${escapeHtml(s.culturalSignificance)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function renderEmergency(contacts) {
+      const body = document.getElementById('emergencyBody');
+      if (!contacts || contacts.length === 0) {
+        body.innerHTML = '<div style="text-align:center; color:var(--text-muted);">हेल्पलाइन नंबर लोड नहीं हो सके।</div>';
+        return;
+      }
+      body.innerHTML = contacts.map(c => `
+        <div class="dict-entry" style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div class="dict-word" style="font-size:0.95rem;">${c.icon || '🚨'} ${escapeHtml(c.titleHindi)}</div>
+            <div class="dict-note">${escapeHtml(c.description || '')}</div>
+          </div>
+          <a href="tel:${c.number}" style="background:var(--pine-700); color:#fff; text-decoration:none; padding:6px 14px; border-radius:100px; font-weight:bold; font-size:0.9rem;">
+            📞 ${escapeHtml(c.number)}
+          </a>
+        </div>
+      `).join('');
+    }
+
+    async function saveApiKey() {
+      const key = document.getElementById('apiKeyInput').value.trim();
+      const feedback = document.getElementById('keyFeedback');
+      if (!key) {
+        feedback.style.color = '#ef4444';
+        feedback.textContent = 'कृपया एक मान्य Key दर्ज करें।';
+        return;
+      }
+
+      feedback.style.color = '#e2e8f0';
+      feedback.textContent = 'सत्यापित किया जा रहा है...';
 
       try {
-        const resp = await fetch('/api/set-key', {
+        const res = await fetch('/api/set-key', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: key })
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ key })
         });
-        const data = await resp.json();
+        const data = await res.json();
         if (data.success) {
-          feedback.style.color = '#34d399';
-          feedback.textContent = '✅ शानदार! API Key सुरक्षित हो गई और ऑनलाइन मोड सक्रिय हो गया है!';
+          feedback.style.color = '#4ade80';
+          feedback.textContent = '✓ API Key सफलतापूर्वक सुरक्षित हो गई!';
           setTimeout(() => {
-            closeKeyModal();
-            checkKeyStatus();
-            feedback.style.display = 'none';
-          }, 1200);
+            closeModal('keyModal');
+            checkStatus();
+          }, 1000);
         } else {
-          feedback.style.color = '#f87171';
-          feedback.textContent = data.error || 'त्रुटि: की सुरक्षित नहीं हो सकी।';
+          feedback.style.color = '#ef4444';
+          feedback.textContent = data.error || 'अमान्य Key';
         }
       } catch (err) {
-        feedback.style.color = '#f87171';
-        feedback.textContent = 'सर्वर से संपर्क करने में असमर्थ।';
+        feedback.style.color = '#ef4444';
+        feedback.textContent = 'सर्वर से संपर्क करने में त्रुटि।';
       }
+    }
+
+    // Voice sample recording
+    async function toggleVoiceRecord() {
+      const btn = document.getElementById('recordVoiceBtn');
+      const statusMsg = document.getElementById('voiceStatusMsg');
+
+      if (isRecordingVoice) {
+        // Stop recording
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+        isRecordingVoice = false;
+        btn.textContent = '🔴 रिकॉर्ड शुरू करें';
+        btn.style.background = '';
+      } else {
+        // Start recording
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) audioChunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            statusMsg.textContent = 'आवाज़ विश्लेषण एवं अपलोड हो रहा है...';
+            
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = async () => {
+              const base64Audio = reader.result;
+              try {
+                const res = await fetch('/api/voice/upload', {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({ audioData: base64Audio, voiceName: 'kore', pitchHz: 220 })
+                });
+                const data = await res.json();
+                if (data.success) {
+                  statusMsg.style.color = '#4ade80';
+                  statusMsg.textContent = '✓ आपकी आवाज़ कैलिब्रेट हो गई!';
+                  document.getElementById('playSampleBtn').style.display = 'inline-flex';
+                } else {
+                  statusMsg.style.color = '#ef4444';
+                  statusMsg.textContent = 'अपलोड विफल रहा।';
+                }
+              } catch (e) {
+                statusMsg.style.color = '#ef4444';
+                statusMsg.textContent = 'सर्वर त्रुटि।';
+              }
+            };
+          };
+
+          mediaRecorder.start();
+          isRecordingVoice = true;
+          btn.textContent = '⏹️ रिकॉर्डिंग रोकें';
+          btn.style.background = '#ef4444';
+          statusMsg.textContent = 'बोलिए... (3 से 5 सेकंड)';
+        } catch (err) {
+          alert('माइक्रोफ़ोन एक्सेस नहीं मिल सका: ' + err.message);
+        }
+      }
+    }
+
+    function playVoiceSample() {
+      const audio = new Audio('/api/voice/sample?t=' + Date.now());
+      audio.play();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
     window.onload = init;
@@ -1699,4 +1647,3 @@ INDEX_HTML = """<!DOCTYPE html>
 </body>
 </html>
 """
-
