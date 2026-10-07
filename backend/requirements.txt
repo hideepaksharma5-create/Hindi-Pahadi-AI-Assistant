@@ -1,0 +1,14 @@
+# Pahadi AI Assistant (पहाड़ी संगम) Dependencies
+# Python 3.10+ recommended
+
+# Environment Variables Configuration
+python-dotenv>=1.0.0
+
+# HTTP Requests for AI APIs & Services
+requests>=2.31.0
+
+# Google Gemini Generative AI SDK
+google-generativeai>=0.5.0
+
+# Interactive Web Application Dashboard (Optional)
+streamlit>=1.35.0
