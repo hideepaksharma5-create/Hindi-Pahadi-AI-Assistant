@@ -33,4 +33,7 @@ debug.keystore
 
 # Audio generation cache
 custom_voice/outputs/
+static_audio/
+*.mp3
+
 

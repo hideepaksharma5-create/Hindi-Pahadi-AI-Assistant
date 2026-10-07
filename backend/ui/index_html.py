@@ -857,7 +857,7 @@ INDEX_HTML = """<!DOCTYPE html>
 
         const ttsBtn = msgEl.querySelector('.tts-play-btn');
         ttsBtn.addEventListener('click', () => {
-          speakText(text);
+          speakText(text, ttsBtn);
         });
 
         const fbUp = msgEl.querySelector('.feedback-up');
@@ -890,36 +890,83 @@ INDEX_HTML = """<!DOCTYPE html>
       chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
     }
 
-    // Text To Speech: Try Gemini Neural TTS, then Browser Web Speech
-    async function speakText(text) {
+    // High-Fidelity Neural Voice TTS: edge-tts (hi-IN-SwaraNeural) + Web Speech fallback
+    async function speakText(text, btn = null) {
       if (!text) return;
-      showToast('ऑडियो तैयार हो रहा है...');
+      
+      const originalHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.innerHTML = '<span class="text-xs text-saffron-400 animate-pulse">⏳ लोड हो रहा है...</span>';
+        btn.disabled = true;
+      }
+      showToast('स्वरा न्यूरल आवाज़ (hi-IN-SwaraNeural) तैयार हो रही है...');
 
       try {
-        const res = await fetch('/api/voice/synthesize', {
+        const res = await fetch('/api/tts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
+          body: JSON.stringify({ 
+            text: text,
+            voice: 'hi-IN-SwaraNeural',
+            rate: '-6%',
+            pitch: '+0Hz'
+          })
         });
-        const data = await res.json();
-        if (data.success && data.audioUrl) {
-          const audio = new Audio(data.audioUrl);
-          audio.play();
-          return;
+
+        if (res.ok) {
+          const data = await res.json();
+          const audioUrl = data.audio_url || data.audioUrl;
+          if (audioUrl) {
+            const audio = new Audio(audioUrl);
+            audio.play();
+
+            if (btn) {
+              btn.innerHTML = '<span class="text-xs text-emerald-400 animate-pulse">🔊 बज रहा है...</span>';
+            }
+
+            audio.onended = () => {
+              if (btn) {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+                lucide.createIcons();
+              }
+            };
+            audio.onerror = () => {
+              if (btn) {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+                lucide.createIcons();
+              }
+            };
+            return;
+          }
         }
       } catch (err) {
-        console.warn('Backend neural TTS fallback:', err);
+        console.warn('FastAPI /api/tts endpoint unavailable, trying fallback:', err);
       }
 
+      // Browser Web Speech API fallback
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'hi-IN';
         const speed = parseFloat(document.getElementById('voiceSpeedSelect')?.value) || 1.0;
         utterance.rate = speed;
+        utterance.onend = () => {
+          if (btn) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            lucide.createIcons();
+          }
+        };
         window.speechSynthesis.speak(utterance);
       } else {
-        showToast('आपके ब्राउज़र में स्पीच सिंथेसिस समर्थित नहीं है।');
+        if (btn) {
+          btn.innerHTML = originalHtml;
+          btn.disabled = false;
+          lucide.createIcons();
+        }
+        showToast('ध्वनि उत्पन्न करने में समस्या हुई।');
       }
     }
 

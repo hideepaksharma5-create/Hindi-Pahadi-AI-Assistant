@@ -152,6 +152,17 @@ class PahadiServerHandler(http.server.BaseHTTPRequestHandler):
                         self._send_data(f.read(), "audio/wav")
                 else:
                     self._send_data(b"Sample Not Found", "text/plain", 404)
+            elif path.startswith("/audio/"):
+                fname = os.path.basename(path)
+                fpath = PROJECT_ROOT / "static_audio" / fname
+                if not fpath.exists():
+                    fpath = PROJECT_ROOT / "custom_voice" / "outputs" / fname
+                if fpath.exists():
+                    mime = "audio/mpeg" if fname.endswith(".mp3") else "audio/wav"
+                    with open(fpath, "rb") as f:
+                        self._send_data(f.read(), mime)
+                else:
+                    self._send_data(b"Audio Not Found", "text/plain", 404)
             elif path == "/manifest.json":
                 manifest = {
                     "name": "पहाड़ी संगम AI - Pahadi AI Assistant",
@@ -177,6 +188,30 @@ class PahadiServerHandler(http.server.BaseHTTPRequestHandler):
             content_len = int(self.headers.get("Content-Length", 0))
             post_data = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
             body = json.loads(post_data) if post_data else {}
+
+            if path in ["/api/tts", "/api/voice/synthesize"]:
+                text = body.get("text", "").strip()
+                voice_name = body.get("voice") or body.get("voiceName") or "hi-IN-SwaraNeural"
+                rate = body.get("rate", "-6%")
+                pitch = body.get("pitch", "+0Hz")
+
+                if not text:
+                    self._send_json({"success": False, "status": "error", "error": "No text provided"}, 400)
+                else:
+                    try:
+                        if voice_clone_engine:
+                            res = voice_clone_engine.synthesize(text, voice_name=voice_name, rate=rate, pitch=pitch)
+                            self._send_json(res)
+                        else:
+                            self._send_json({
+                                "success": False,
+                                "status": "fallback",
+                                "fallbackBrowser": True,
+                                "error": "Voice engine unavailable, using browser speech."
+                            }, 200)
+                    except Exception as e:
+                        self._send_json({"success": False, "status": "error", "error": str(e)}, 500)
+
 
             if path == "/api/translate":
                 query = body.get("query", "")
