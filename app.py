@@ -647,7 +647,7 @@ def call_gemini_api(prompt: str, system_prompt: str, json_mode: bool = False) ->
         raise ValueError("GEMINI_API_KEY is not configured")
     
     # Primary active models with fallback to latest stable aliases
-    models = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-latest"]
+    models = ["gemini-flash-lite-latest", "gemini-3.5-flash-lite", "gemini-flash-latest", "gemini-2.5-flash"]
     last_err = None
     
     for model in models:
@@ -676,7 +676,7 @@ def call_gemini_api(prompt: str, system_prompt: str, json_mode: bool = False) ->
             method="POST"
         )
         try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with urllib.request.urlopen(req, timeout=25) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 candidates = data.get("candidates", [])
                 if not candidates:
@@ -689,7 +689,6 @@ def call_gemini_api(prompt: str, system_prompt: str, json_mode: bool = False) ->
             last_err = e
             # If model deprecated/not found (404) or transient rate limit / overload (503/429), try next model candidate
             if e.code in (404, 503, 429):
-                time.sleep(0.5)
                 continue
             raise
         except Exception as e:
@@ -1212,23 +1211,27 @@ INDEX_HTML = """<!DOCTYPE html>
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(8px);
       z-index: 100;
       align-items: center;
       justify-content: center;
+      padding: 1rem;
     }
     .modal-overlay.active { display: flex; }
     .modal-box {
       background: #1e293b;
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 2rem;
-      max-width: 480px;
-      width: 90%;
+      padding: 1.5rem;
+      max-width: 540px;
+      width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
       box-shadow: var(--shadow);
+      position: relative;
     }
-    .modal-box h3 { margin-bottom: 1rem; color: #fcd34d; }
+    .modal-box h3 { margin-bottom: 0.8rem; color: #fcd34d; }
     .modal-box input {
       width: 100%;
       background: #0f172a;
@@ -1311,7 +1314,14 @@ INDEX_HTML = """<!DOCTYPE html>
             <div id="badgeContainer"><span class="badge badge-offline">Offline Engine Active</span></div>
             <div id="translatedOutput" class="result-text">अनुवाद यहाँ दिखाई देगा...</div>
             <div id="phoneticOutput" class="phonetic-text"></div>
-            <button id="speakResultBtn" class="btn-icon" onclick="speakTranslation()" title="उच्चारण सुनें (Listen)" style="display:none;">🔊</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:8px;">
+              <button id="speakResultBtn" class="btn-tts" onclick="speakTranslation()" title="उच्चारण सुनें (Listen)" style="display:none;">
+                <span class="tts-icon">🔊</span> <span class="tts-label">सुनें (Read Aloud)</span>
+              </button>
+              <button class="mode-chip voiceModeToggleBtn" onclick="toggleVoiceMode()" title="आवाज़ बदलें">
+                🎙️ आवाज़: <span class="voiceModeLabel" style="color:#c084fc; font-weight:600;">मेरी आवाज़ (Cloned) ✨</span>
+              </button>
+            </div>
           </div>
 
           <div id="contextCard" class="context-card" style="display:none;">
@@ -1334,8 +1344,8 @@ INDEX_HTML = """<!DOCTYPE html>
             <button class="mode-chip" onclick="setChatMode('student', this)">📚 छात्र सहायक (Student)</button>
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
-            <button id="voiceModeToggle" class="mode-chip" onclick="toggleVoiceMode()" title="आवाज़ चुनें (डिफ़ॉल्ट या आपकी क्लोन आवाज़)">
-              🎙️ आवाज़: <span id="voiceModeLabel" style="color:#38bdf8; font-weight:600;">डिफ़ॉल्ट</span>
+            <button class="mode-chip voiceModeToggleBtn" onclick="toggleVoiceMode()" title="आवाज़ चुनें (डिफ़ॉल्ट या आपकी क्लोन आवाज़)">
+              🎙️ आवाज़: <span class="voiceModeLabel" style="color:#c084fc; font-weight:600;">मेरी आवाज़ (Cloned) ✨</span>
             </button>
             <button id="autoReadToggle" class="mode-chip" onclick="toggleAutoRead()" title="उत्तर मिलते ही अपने-आप आवाज़ में बोलकर सुनाएं">
               🔊 ऑटो-रीड: <span id="autoReadStatus" style="color:#f87171; font-weight:600;">बंद</span>
@@ -1425,19 +1435,49 @@ INDEX_HTML = """<!DOCTYPE html>
   </div>
 
   <!-- VOICE CLONE MODAL -->
-  <div id="voiceCloneModal" class="modal-overlay">
-    <div class="modal-box" style="max-width: 540px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.8rem;">
-        <h3 style="margin:0; color: #c084fc;">🎙️ व्यक्तिगत आवाज़ क्लोनिंग (Voice Clone Studio)</h3>
-        <button class="btn-icon" onclick="closeVoiceCloneModal()" style="font-size:1.1rem; line-height:1;">✕</button>
+  <div id="voiceCloneModal" class="modal-overlay" onclick="if(event.target===this) closeVoiceCloneModal()">
+    <div class="modal-box" style="max-width: 540px; position: relative;">
+      <!-- Pinned Floating Close Button - Never scrolls out of view -->
+      <button type="button" class="btn-cut-modal" onclick="closeVoiceCloneModal()" title="विंडो बंद करें (Cut / Close)" style="position: absolute; top: 12px; right: 14px; z-index: 99; background: #ef4444; color: white; border: none; border-radius: 8px; padding: 6px 14px; font-weight: 700; font-size: 0.88rem; cursor: pointer; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); display: flex; align-items: center; gap: 4px;">
+        ✕ कट करें (Cut)
+      </button>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.8rem; padding-right: 120px;">
+        <h3 style="margin:0; color: #c084fc; font-size: 1.15rem;">🎙️ आवाज़ क्लोन स्टूडियो (Voice Studio)</h3>
       </div>
       <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.8rem; line-height: 1.5;">
-        AI को अपनी आवाज़ में बोलने के लिए सिखाएं। नीचे माइक बटन दबाकर 8-10 सेकंड का अपना वॉइस सैंपल रिकॉर्ड करें।
+        AI को अपनी आवाज़ में बोलने के लिए सिखाएं। नीचे माइक बटन दबाकर 8-10 सेकंड का अपना वॉइस सैंपल रिकॉर्ड करें, या अपनी मनपसंद न्यूरल आवाज़ शैली चुनें।
       </p>
 
-      <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 10px; padding: 12px; margin-bottom: 1rem; font-size: 0.88rem; color: #fde68a;">
+      <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 10px; padding: 12px; margin-bottom: 0.85rem; font-size: 0.88rem; color: #fde68a;">
         <strong>📖 रिकॉर्ड करते समय इस वाक्य को बोलें:</strong><br>
         <em>"नमस्कार जी! मैं पहाड़ी संगम AI सहायक का उपयोग कर रहा हूँ। यह मेरी अपनी आवाज़ का नमूना है।"</em>
+      </div>
+
+      <!-- Neural Preset Selector -->
+      <div style="margin-bottom: 0.85rem; text-align: left;">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #c084fc; display: block; margin-bottom: 0.4rem;">
+          🎭 आवाज़ की शैली (AI Neural Voice Preset):
+        </label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="voicePresetsContainer">
+          <label style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; font-size:0.82rem;">
+            <input type="radio" name="voicePreset" value="fenrir" onchange="onVoicePresetChange('fenrir')">
+            <span>🦁 गंभीर पुरुष (Fenrir)</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; font-size:0.82rem;">
+            <input type="radio" name="voicePreset" value="puck" onchange="onVoicePresetChange('puck')">
+            <span>⚡ उत्साही युवा (Puck)</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; font-size:0.82rem;">
+            <input type="radio" name="voicePreset" value="aoede" onchange="onVoicePresetChange('aoede')">
+            <span>🌸 सौम्य स्त्री (Aoede)</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; font-size:0.82rem;">
+            <input type="radio" name="voicePreset" value="kore" checked onchange="onVoicePresetChange('kore')">
+            <span>🌺 स्पष्ट मधुर (Kore)</span>
+          </label>
+        </div>
+        <div id="detectedPitchInfo" style="display:none; font-size:0.82rem; color:#38bdf8; margin-top:6px; font-weight:500;"></div>
       </div>
 
       <!-- Live Recorder Panel -->
@@ -1458,9 +1498,14 @@ INDEX_HTML = """<!DOCTYPE html>
         <div id="recordedPreviewSection" style="display: none; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
           <div style="font-size: 0.85rem; margin-bottom: 0.5rem; color: #34d399;">✅ रिकॉर्डिंग पूरी हुई! प्ले करके सुनें:</div>
           <audio id="recordedAudioPlayer" controls style="width: 100%; height: 36px; margin-bottom: 0.75rem;"></audio>
-          <button class="btn-primary" onclick="uploadRecordedVoice()" style="background: linear-gradient(135deg, #10b981, #059669); width: 100%;">
-            💾 यह आवाज़ AI में सुरक्षित करें (Save Voice)
-          </button>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="saveVoiceBtn" class="btn-primary" onclick="uploadRecordedVoice()" style="background: linear-gradient(135deg, #10b981, #059669); flex: 1; font-weight: 600;">
+              💾 यह आवाज़ AI में सुरक्षित करें (Save Voice)
+            </button>
+            <button type="button" class="btn-secondary" onclick="closeVoiceCloneModal()" style="border-color: #ef4444; color: #fca5a5; font-weight: 600; padding: 8px 16px; border-radius: 12px; background: rgba(239, 68, 68, 0.15);">
+              ✕ कट करें (Cut)
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1470,9 +1515,12 @@ INDEX_HTML = """<!DOCTYPE html>
         <input type="file" id="voiceFileInput" accept="audio/*" onchange="handleVoiceFileUpload(event)" style="font-size: 0.8rem; max-width: 190px;" />
       </div>
 
-      <div id="voiceFeedback" style="font-size: 0.85rem; margin-top: 0.75rem; display: none;"></div>
-      <div class="modal-actions" style="margin-top: 1rem;">
-        <button class="btn-secondary" onclick="closeVoiceCloneModal()">बंद करें (Close)</button>
+      <div id="voiceFeedback" style="font-size: 0.88rem; margin-top: 0.75rem; display: none; padding: 12px; border-radius: 8px; background: rgba(16, 185, 129, 0.1);"></div>
+      <div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.8rem;">
+        <span style="font-size: 0.8rem; color: var(--text-muted);">बाहर क्लिक करें, Esc दबाएं या लाल 'कट करें' दबाएं</span>
+        <button class="btn-primary" onclick="closeVoiceCloneModal()" style="background: linear-gradient(135deg, #ef4444, #dc2626); font-weight: 600; padding: 8px 18px;">
+          ✕ कट / विंडो बंद करें (Cut / Close)
+        </button>
       </div>
     </div>
   </div>
@@ -1702,6 +1750,8 @@ INDEX_HTML = """<!DOCTYPE html>
 
     // Voice Clone & Audio State
     let selectedVoiceMode = 'default'; // 'default' or 'cloned'
+    let selectedVoicePreset = 'aoede';
+    let detectedPitchHz = 200;
     let currentAudioPlayer = null;
     let mediaRecorder = null;
     let recordedChunks = [];
@@ -1709,6 +1759,38 @@ INDEX_HTML = """<!DOCTYPE html>
     let recordSeconds = 0;
     let recordedBlob = null;
     let hasClonedVoice = false;
+
+    function setVoiceMode(mode) {
+      selectedVoiceMode = mode;
+      localStorage.setItem('pahadiVoiceMode', mode);
+      
+      const labels = document.querySelectorAll('.voiceModeLabel');
+      const btns = document.querySelectorAll('.voiceModeToggleBtn, #voiceModeToggle');
+      
+      if (mode === 'cloned') {
+        labels.forEach(lbl => {
+          lbl.textContent = 'मेरी आवाज़ (Cloned) ✨';
+          lbl.style.color = '#c084fc';
+        });
+        btns.forEach(btn => {
+          btn.style.borderColor = '#c084fc';
+          btn.style.background = 'rgba(192, 132, 252, 0.2)';
+        });
+      } else {
+        labels.forEach(lbl => {
+          lbl.textContent = 'डिफ़ॉल्ट आवाज़ (Default)';
+          lbl.style.color = '#38bdf8';
+        });
+        btns.forEach(btn => {
+          btn.style.borderColor = '';
+          btn.style.background = '';
+        });
+      }
+    }
+
+    function onVoicePresetChange(val) {
+      selectedVoicePreset = val;
+    }
 
     function openVoiceCloneModal() {
       document.getElementById('voiceCloneModal').classList.add('active');
@@ -1722,6 +1804,14 @@ INDEX_HTML = """<!DOCTYPE html>
       }
     }
 
+    // Keyboard Escape key listener to cut/close modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeVoiceCloneModal();
+        if (typeof closeKeyModal === 'function') closeKeyModal();
+      }
+    });
+
     async function checkVoiceCloneStatus() {
       try {
         const resp = await fetch('/api/voice/status');
@@ -1731,17 +1821,35 @@ INDEX_HTML = """<!DOCTYPE html>
         const text = document.getElementById('voiceCloneStatusText');
         const feedback = document.getElementById('voiceFeedback');
         
+        if (data.profile && data.profile.voiceName) {
+          selectedVoicePreset = data.profile.voiceName;
+          const radio = document.querySelector(`input[name="voicePreset"][value="${selectedVoicePreset}"]`);
+          if (radio) radio.checked = true;
+        }
+
         if (data.hasVoice) {
-          icon.textContent = '🟢';
-          text.textContent = 'मेरी आवाज़ (Active)';
+          if (icon) icon.textContent = '🟢';
+          if (text) text.textContent = 'मेरी आवाज़ (Active)';
+
+          // If voice exists and user hasn't explicitly chosen 'default', activate cloned mode!
+          const userSavedPref = localStorage.getItem('pahadiVoiceMode');
+          if (userSavedPref !== 'default') {
+            setVoiceMode('cloned');
+          } else {
+            setVoiceMode('default');
+          }
+
           if (feedback) {
             feedback.style.display = 'block';
             feedback.style.color = '#34d399';
-            feedback.textContent = `✅ आपकी आवाज़ सुरक्षित है (${(data.voiceSizeBytes / 1024).toFixed(1)} KB)। आप चैट में 'मेरी आवाज़' चुनकर इसे सुन सकते हैं।`;
+            feedback.style.background = 'rgba(16, 185, 129, 0.15)';
+            feedback.style.border = '1px solid #10b981';
+            feedback.innerHTML = `✅ <strong>आपकी आवाज़ सुरक्षित है</strong> (${(data.voiceSizeBytes / 1024).toFixed(1)} KB, Preset: ${selectedVoicePreset.toUpperCase()})। चैट व अनुवाद में 'मेरी आवाज़' सक्रिय है।`;
           }
         } else {
-          icon.textContent = '🎙️';
-          text.textContent = 'मेरी आवाज़ (Voice)';
+          setVoiceMode('default');
+          if (icon) icon.textContent = '🎙️';
+          if (text) text.textContent = 'मेरी आवाज़ (Voice)';
         }
       } catch (e) {
         console.error("Voice status error", e);
@@ -1749,8 +1857,6 @@ INDEX_HTML = """<!DOCTYPE html>
     }
 
     function toggleVoiceMode() {
-      const label = document.getElementById('voiceModeLabel');
-      const btn = document.getElementById('voiceModeToggle');
       if (selectedVoiceMode === 'default') {
         if (!hasClonedVoice) {
           openVoiceCloneModal();
@@ -1758,21 +1864,72 @@ INDEX_HTML = """<!DOCTYPE html>
           if (feedback) {
             feedback.style.display = 'block';
             feedback.style.color = '#f59e0b';
-            feedback.textContent = '⚠️ कृपया पहले नीचे अपना 10 सेकंड का वॉइस सैंपल रिकॉर्ड या अपलोड करें!';
+            feedback.textContent = '⚠️ कृपया पहले नीचे अपना 8-10 सेकंड का वॉइस सैंपल रिकॉर्ड या अपलोड करें!';
           }
           return;
         }
-        selectedVoiceMode = 'cloned';
-        label.textContent = 'मेरी आवाज़ (Cloned) ✨';
-        label.style.color = '#c084fc';
-        btn.style.borderColor = '#c084fc';
-        btn.style.background = 'rgba(192, 132, 252, 0.15)';
+        setVoiceMode('cloned');
       } else {
-        selectedVoiceMode = 'default';
-        label.textContent = 'डिफ़ॉल्ट';
-        label.style.color = '#38bdf8';
-        btn.style.borderColor = '';
-        btn.style.background = '';
+        setVoiceMode('default');
+      }
+    }
+
+    async function analyzeRecordedAudioPitch(blob) {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const arrayBuf = await blob.arrayBuffer();
+        const audioBuf = await ctx.decodeAudioData(arrayBuf);
+        const chanData = audioBuf.getChannelData(0);
+        const rate = audioBuf.sampleRate;
+
+        // Autocorrelation pitch detector
+        const start = Math.floor(chanData.length * 0.25);
+        const len = Math.min(2048, Math.floor(chanData.length * 0.5));
+        let bestCorrelation = 0;
+        let bestOffset = -1;
+        const minOffset = Math.floor(rate / 350); // ~350 Hz
+        const maxOffset = Math.floor(rate / 85);  // ~85 Hz
+
+        for (let offset = minOffset; offset <= maxOffset; offset++) {
+          let diffSum = 0;
+          for (let i = 0; i < len; i++) {
+            diffSum += Math.abs(chanData[start + i] - chanData[start + i + offset]);
+          }
+          const correlation = 1 - (diffSum / len);
+          if (correlation > bestCorrelation) {
+            bestCorrelation = correlation;
+            bestOffset = offset;
+          }
+        }
+
+        if (bestOffset > 0) {
+          detectedPitchHz = Math.round(rate / bestOffset);
+        }
+        ctx.close();
+
+        // Intelligent tone mapping
+        if (detectedPitchHz < 145) {
+          selectedVoicePreset = 'fenrir';
+        } else if (detectedPitchHz < 175) {
+          selectedVoicePreset = 'puck';
+        } else if (detectedPitchHz < 215) {
+          selectedVoicePreset = 'aoede';
+        } else {
+          selectedVoicePreset = 'kore';
+        }
+
+        const radio = document.querySelector(`input[name="voicePreset"][value="${selectedVoicePreset}"]`);
+        if (radio) radio.checked = true;
+
+        const info = document.getElementById('detectedPitchInfo');
+        if (info) {
+          info.style.display = 'block';
+          info.textContent = `🎯 स्वर विश्लेषण: अनुमानित पिच ~${detectedPitchHz} Hz (सुझाया गया न्यूरल टोन: ${selectedVoicePreset.toUpperCase()})`;
+        }
+      } catch (err) {
+        console.warn("Pitch analysis notice:", err);
       }
     }
 
@@ -1788,12 +1945,14 @@ INDEX_HTML = """<!DOCTYPE html>
           }
         };
 
-        mediaRecorder.onstop = () => {
+        mediaRecorder.onstop = async () => {
           recordedBlob = new Blob(recordedChunks, { type: 'audio/wav' });
           const audioUrl = URL.createObjectURL(recordedBlob);
           const player = document.getElementById('recordedAudioPlayer');
           player.src = audioUrl;
           document.getElementById('recordedPreviewSection').style.display = 'block';
+          document.getElementById('recordStatus').textContent = '✅ रिकॉर्डिंग पूरी हुई! विश्लेषण किया जा रहा है...';
+          await analyzeRecordedAudioPitch(recordedBlob);
           document.getElementById('recordStatus').textContent = '✅ रिकॉर्डिंग पूरी हुई! नीचे प्ले करके देखें या सेव करें।';
         };
 
@@ -1833,9 +1992,17 @@ INDEX_HTML = """<!DOCTYPE html>
     async function uploadRecordedVoice() {
       if (!recordedBlob) return;
       const feedback = document.getElementById('voiceFeedback');
+      const saveBtn = document.getElementById('saveVoiceBtn');
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ सुरक्षित हो रहा है...';
+      }
+
       feedback.style.display = 'block';
       feedback.style.color = '#38bdf8';
-      feedback.textContent = 'आपकी आवाज़ सुरक्षित की जा रही है...';
+      feedback.style.background = 'rgba(56, 189, 248, 0.15)';
+      feedback.style.border = '1px solid #38bdf8';
+      feedback.textContent = 'आपकी आवाज़ और न्यूरल प्रोफाइल सुरक्षित की जा रही है...';
 
       const reader = new FileReader();
       reader.onloadend = async () => {
@@ -1844,46 +2011,74 @@ INDEX_HTML = """<!DOCTYPE html>
           const resp = await fetch('/api/voice/upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ audioData: base64Audio })
+            body: JSON.stringify({ 
+              audioData: base64Audio,
+              voiceName: selectedVoicePreset,
+              pitchHz: detectedPitchHz
+            })
           });
           const data = await resp.json();
           if (data.success) {
-            feedback.style.color = '#34d399';
-            feedback.textContent = '🎉 आपकी आवाज़ सफलतापूर्वक सुरक्षित हो गई! अब AI आपकी आवाज़ में बोलेगा।';
             hasClonedVoice = true;
+            setVoiceMode('cloned');
             checkVoiceCloneStatus();
+
+            feedback.style.color = '#34d399';
+            feedback.style.background = 'rgba(16, 185, 129, 0.2)';
+            feedback.style.border = '1px solid #10b981';
+            feedback.innerHTML = `
+              <div style="font-weight: 700; font-size: 1rem; margin-bottom: 4px;">🎉 बधाई! आपकी आवाज़ AI में सुरक्षित हो गई है।</div>
+              <div>अब चैट और अनुवाद दोनों में AI आपकी न्यूरल आवाज़ में बोलेगा।</div>
+              <div style="margin-top: 8px; font-size: 0.85rem; color: #a7f3d0; font-weight: 600;">
+                ⏱️ यह विंडो <strong>1.5 सेकंड में स्वतः बंद हो जाएगी</strong> (या ऊपर लाल 'कट करें' दबाएं)।
+              </div>
+            `;
+
+            if (saveBtn) {
+              saveBtn.textContent = '✅ आवाज़ सुरक्षित हो गई!';
+              saveBtn.style.background = '#10b981';
+            }
+
+            // Auto-close modal after 1.8 seconds so user is never stuck
             setTimeout(() => {
-              selectedVoiceMode = 'cloned';
-              const label = document.getElementById('voiceModeLabel');
-              if (label) {
-                label.textContent = 'मेरी आवाज़ (Cloned) ✨';
-                label.style.color = '#c084fc';
+              closeVoiceCloneModal();
+              if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 यह आवाज़ AI में सुरक्षित करें (Save Voice)';
+                saveBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
               }
-              const btn = document.getElementById('voiceModeToggle');
-              if (btn) {
-                btn.style.borderColor = '#c084fc';
-                btn.style.background = 'rgba(192, 132, 252, 0.15)';
-              }
-            }, 1000);
+            }, 1800);
+
           } else {
             feedback.style.color = '#f87171';
+            feedback.style.background = 'rgba(239, 68, 68, 0.15)';
+            feedback.style.border = '1px solid #ef4444';
             feedback.textContent = data.error || 'आवाज़ सुरक्षित करने में त्रुटि आई।';
+            if (saveBtn) {
+              saveBtn.disabled = false;
+              saveBtn.textContent = '💾 पुनः प्रयास करें (Try Again)';
+            }
           }
         } catch (e) {
           feedback.style.color = '#f87171';
           feedback.textContent = 'सर्वर से संपर्क करने में असमर्थ।';
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 पुनः प्रयास करें (Try Again)';
+          }
         }
       };
       reader.readAsDataURL(recordedBlob);
     }
 
-    function handleVoiceFileUpload(e) {
+    async function handleVoiceFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
       recordedBlob = file;
       const player = document.getElementById('recordedAudioPlayer');
       player.src = URL.createObjectURL(file);
       document.getElementById('recordedPreviewSection').style.display = 'block';
+      await analyzeRecordedAudioPitch(file);
       uploadRecordedVoice();
     }
 
@@ -1934,16 +2129,19 @@ INDEX_HTML = """<!DOCTYPE html>
         if (parentMsg) parentMsg.classList.add('speaking-bubble');
       }
 
-ss      const stopBtn = document.getElementById('globalStopTtsBtn');
+      const stopBtn = document.getElementById('globalStopTtsBtn');
       if (stopBtn) stopBtn.style.display = 'inline-flex';
 
-      // 1. Cloned Voice Mode
+      // 1. Cloned Voice Mode (Neural TTS)
       if (selectedVoiceMode === 'cloned') {
         try {
           const resp = await fetch('/api/voice/synthesize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: spokenText })
+            body: JSON.stringify({ 
+              text: spokenText,
+              voiceName: selectedVoicePreset
+            })
           });
           const data = await resp.json();
           if (data.success && data.audioUrl) {
@@ -1953,20 +2151,29 @@ ss      const stopBtn = document.getElementById('globalStopTtsBtn');
               if (label) label.textContent = 'रोकें (Stop)';
               if (icon) icon.textContent = '⏹️';
             }
-            currentAudioPlayer = new Audio(data.audioUrl);
+            if (currentAudioPlayer) {
+              currentAudioPlayer.pause();
+              currentAudioPlayer = null;
+            }
+            // Add cache-busting timestamp to audio URL so browser plays the fresh audio
+            const cacheBuster = data.audioUrl + (data.audioUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+            currentAudioPlayer = new Audio(cacheBuster);
             currentAudioPlayer.onended = () => stopAllSpeech();
-            currentAudioPlayer.onerror = () => stopAllSpeech();
+            currentAudioPlayer.onerror = (err) => {
+              console.error("Audio playback error:", err);
+              stopAllSpeech();
+            };
             await currentAudioPlayer.play();
             return;
           } else {
-            console.warn("Cloned synthesis failed, falling back to browser speech:", data.error);
+            console.warn("Cloned synthesis notice, falling back to browser voice:", data.error);
           }
         } catch (e) {
-          console.warn("Cloned synthesis error, falling back to browser speech:", e);
+          console.warn("Cloned synthesis error, falling back to browser voice:", e);
         }
       }
 
-      // 2. Default Browser Voice (Fallback or Default Mode)
+      // 2. Browser Voice (Default Mode or Fallback)
       if (!window.speechSynthesis) {
         alert("आपका ब्राउज़र टेक्स्ट-टू-स्पीच का समर्थन नहीं करता है।");
         stopAllSpeech();
@@ -1988,9 +2195,17 @@ ss      const stopBtn = document.getElementById('globalStopTtsBtn');
       } else {
         utterance.lang = 'hi-IN';
       }
-      utterance.rate = 0.95;
-      utterance.pitch = 1.0;
 
+      if (selectedVoiceMode === 'cloned') {
+        if (selectedVoicePreset === 'fenrir') utterance.pitch = 0.8;
+        else if (selectedVoicePreset === 'puck') utterance.pitch = 1.0;
+        else if (selectedVoicePreset === 'aoede') utterance.pitch = 1.15;
+        else if (selectedVoicePreset === 'kore') utterance.pitch = 1.25;
+      } else {
+        utterance.pitch = 1.0;
+      }
+
+      utterance.rate = 0.95;
       utterance.onend = () => stopAllSpeech();
       utterance.onerror = () => stopAllSpeech();
 
@@ -2259,193 +2474,204 @@ ss      const stopBtn = document.getElementById('globalStopTtsBtn');
 </html>
 """
 
+class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    daemon_threads = True
+    allow_reuse_address = True
+
 class PahadiServerHandler(http.server.BaseHTTPRequestHandler):
-    def _set_headers(self, content_type="application/json", status=200):
+    def _send_data(self, data: bytes, content_type: str = "application/json", status: int = 200):
         self.send_response(status)
-        self.send_header("Content-Type", f"{content_type}; charset=utf-8")
+        self.send_header("Content-Type", f"{content_type}; charset=utf-8" if "text" in content_type or "json" in content_type else content_type)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Connection", "close")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+        try:
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+
+    def _send_json(self, data: Any, status: int = 200):
+        body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        self._send_data(body, "application/json", status)
+
+    def _send_html(self, html_text: str, status: int = 200):
+        body = html_text.encode("utf-8")
+        self._send_data(body, "text/html", status)
+
+    def do_OPTIONS(self):
+        self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
-    def do_OPTIONS(self):
-        self._set_headers(status=204)
-
     def do_GET(self):
-        path = self.path.split("?")[0]
-        if path in ["/", "/index.html"]:
-            self._set_headers("text/html")
-            self.wfile.write(INDEX_HTML.encode("utf-8"))
-        elif path == "/api/dialects":
-            self._set_headers()
-            self.wfile.write(json.dumps(DIALECTS).encode("utf-8"))
-        elif path == "/api/phrases":
-            self._set_headers()
-            self.wfile.write(json.dumps(CURATED_PHRASES).encode("utf-8"))
-        elif path == "/api/stories":
-            self._set_headers()
-            self.wfile.write(json.dumps(CULTURAL_STORIES).encode("utf-8"))
-        elif path == "/api/knowledge":
-            self._set_headers()
-            self.wfile.write(json.dumps(KNOWLEDGE_TOPICS).encode("utf-8"))
-        elif path == "/api/emergency":
-            self._set_headers()
-            self.wfile.write(json.dumps(EMERGENCY_CONTACTS).encode("utf-8"))
-        elif path == "/api/status":
-            key = get_gemini_api_key()
-            has_key = bool(key)
-            self._set_headers()
-            self.wfile.write(json.dumps({"hasKey": has_key, "online": has_key}).encode("utf-8"))
-        elif path == "/api/voice/status":
-            st = voice_clone_engine.get_voice_status() if voice_clone_engine else {"hasVoice": False, "engineLoaded": False}
-            self._set_headers()
-            self.wfile.write(json.dumps(st).encode("utf-8"))
-        elif path.startswith("/api/voice/audio/"):
-            fname = os.path.basename(path)
-            fpath = os.path.join(os.path.dirname(__file__), "custom_voice", "outputs", fname)
-            if os.path.exists(fpath):
-                self._set_headers("audio/wav")
-                with open(fpath, "rb") as f:
-                    self.wfile.write(f.read())
+        try:
+            path = self.path.split("?")[0]
+            if path in ["/", "/index.html"]:
+                self._send_html(INDEX_HTML)
+            elif path == "/favicon.ico":
+                self.send_response(204)
+                self.end_headers()
+            elif path == "/api/dialects":
+                self._send_json(DIALECTS)
+            elif path == "/api/phrases":
+                self._send_json(CURATED_PHRASES)
+            elif path == "/api/stories":
+                self._send_json(CULTURAL_STORIES)
+            elif path == "/api/knowledge":
+                self._send_json(KNOWLEDGE_TOPICS)
+            elif path == "/api/emergency":
+                self._send_json(EMERGENCY_CONTACTS)
+            elif path == "/api/status":
+                key = get_gemini_api_key()
+                has_key = bool(key)
+                self._send_json({"hasKey": has_key, "online": has_key})
+            elif path == "/api/voice/status":
+                st = voice_clone_engine.get_voice_status() if voice_clone_engine else {"hasVoice": False, "engineLoaded": False}
+                self._send_json(st)
+            elif path.startswith("/api/voice/audio/"):
+                fname = os.path.basename(path)
+                fpath = os.path.join(os.path.dirname(__file__), "custom_voice", "outputs", fname)
+                if os.path.exists(fpath):
+                    with open(fpath, "rb") as f:
+                        self._send_data(f.read(), "audio/wav")
+                else:
+                    self._send_data(b"Audio Not Found", "text/plain", 404)
+            elif path == "/api/voice/sample":
+                fpath = os.path.join(os.path.dirname(__file__), "custom_voice", "my_voice.wav")
+                if os.path.exists(fpath):
+                    with open(fpath, "rb") as f:
+                        self._send_data(f.read(), "audio/wav")
+                else:
+                    self._send_data(b"Sample Not Found", "text/plain", 404)
             else:
-                self._set_headers("text/plain", 404)
-                self.wfile.write(b"Audio Not Found")
-        elif path == "/api/voice/sample":
-            fpath = os.path.join(os.path.dirname(__file__), "custom_voice", "my_voice.wav")
-            if os.path.exists(fpath):
-                self._set_headers("audio/wav")
-                with open(fpath, "rb") as f:
-                    self.wfile.write(f.read())
-            else:
-                self._set_headers("text/plain", 404)
-                self.wfile.write(b"Sample Not Found")
-        else:
-            self._set_headers("text/plain", 404)
-            self.wfile.write(b"Not Found")
+                self._send_data(b"Not Found", "text/plain", 404)
+        except Exception as e:
+            self._send_json({"error": str(e)}, 500)
 
     def do_POST(self):
-        path = self.path.split("?")[0]
-        content_len = int(self.headers.get("Content-Length", 0))
-        post_data = self.rfile.read(content_len).decode("utf-8")
-        body = json.loads(post_data) if post_data else {}
+        try:
+            path = self.path.split("?")[0]
+            content_len = int(self.headers.get("Content-Length", 0))
+            post_data = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+            body = json.loads(post_data) if post_data else {}
 
-        if path == "/api/translate":
-            query = body.get("query", "")
-            dialect_code = body.get("dialect", "kangri")
-            is_reverse = body.get("isReverse", False)
+            if path == "/api/translate":
+                query = body.get("query", "")
+                dialect_code = body.get("dialect", "kangri")
+                is_reverse = body.get("isReverse", False)
 
-            # Try Gemini API if key is set, else use offline engine
-            result = None
-            key = get_gemini_api_key()
-            if key:
-                try:
-                    result = gemini_translate(query, dialect_code, is_reverse)
-                except Exception as e:
-                    print(f"Gemini API error, falling back to offline: {e}")
+                result = None
+                key = get_gemini_api_key()
+                if key:
+                    try:
+                        result = gemini_translate(query, dialect_code, is_reverse)
+                    except Exception as e:
+                        print(f"Gemini API error, falling back to offline: {e}")
 
-            if not result:
-                result = offline_translate(query, dialect_code, is_reverse)
+                if not result:
+                    result = offline_translate(query, dialect_code, is_reverse)
 
-            self._set_headers()
-            self.wfile.write(json.dumps(result).encode("utf-8"))
+                self._send_json(result)
 
-        elif path == "/api/chat":
-            msg = body.get("message", "")
-            mode = body.get("mode", "standard")
-            dialect_code = body.get("dialect", "kangri")
-            history = body.get("history", [])
+            elif path == "/api/chat":
+                msg = body.get("message", "")
+                mode = body.get("mode", "standard")
+                dialect_code = body.get("dialect", "kangri")
+                history = body.get("history", [])
 
-            reply = None
-            key = get_gemini_api_key()
-            if key:
-                try:
-                    reply = gemini_chat(history, msg, mode, dialect_code)
-                except Exception as e:
-                    print(f"Gemini chat error: {e}")
+                reply = None
+                key = get_gemini_api_key()
+                if key:
+                    try:
+                        reply = gemini_chat(history, msg, mode, dialect_code)
+                    except Exception as e:
+                        print(f"Gemini chat error: {e}")
 
-            if not reply:
-                # Friendly offline fallback response
-                d = get_dialect_meta(dialect_code)
-                reply = (
-                    f"नमस्कार जी! ({d['displayNameHindi']})\n"
-                    f"आपका संदेश प्राप्त हुआ: \"{msg}\"।\n\n"
-                    f"वर्तमान में AI सेवा ऑफलाइन मोड में संचालित है। "
-                    f"ऑनलाइन संवादी AI (Online Mode) को सक्रिय करने के लिए ऊपर 'Go Online' बटन पर क्लिक करके अपनी Gemini API Key दर्ज करें, या .env फ़ाइल में सेट करें। "
-                    f"तब तक आप अनुवादक, प्रामाणिक वाक्यांश और लोकधरोहर का आनंद ले सकते हैं!"
-                )
+                if not reply:
+                    d = get_dialect_meta(dialect_code)
+                    reply = (
+                        f"नमस्कार जी! ({d['displayNameHindi']})\n"
+                        f"आपका संदेश प्राप्त हुआ: \"{msg}\"।\n\n"
+                        f"वर्तमान में AI सेवा ऑफलाइन मोड में संचालित है। "
+                        f"ऑनलाइन संवादी AI (Online Mode) को सक्रिय करने के लिए ऊपर 'Go Online' बटन पर क्लिक करके अपनी Gemini API Key दर्ज करें, या .env फ़ाइल में सेट करें। "
+                        f"तब तक आप अनुवादक, प्रामाणिक वाक्यांश और लोकधरोहर का आनंद ले सकते हैं!"
+                    )
 
-            self._set_headers()
-            self.wfile.write(json.dumps({"reply": reply}).encode("utf-8"))
+                self._send_json({"reply": reply})
 
-        elif path == "/api/set-key":
-            new_key = body.get("key", "").strip()
-            if new_key and new_key not in PLACEHOLDER_KEYS:
-                os.environ["GEMINI_API_KEY"] = new_key
-                # Also save to .env
-                env_path = os.path.join(os.path.dirname(__file__), ".env")
-                try:
-                    with open(env_path, "w", encoding="utf-8") as f:
-                        f.write(f"# Pahadi AI Assistant Configuration\nGEMINI_API_KEY={new_key}\n")
-                except Exception as e:
-                    print(f"Could not persist to .env: {e}")
-                self._set_headers()
-                self.wfile.write(json.dumps({"success": True}).encode("utf-8"))
+            elif path == "/api/set-key":
+                new_key = body.get("key", "").strip()
+                if new_key and new_key not in PLACEHOLDER_KEYS:
+                    os.environ["GEMINI_API_KEY"] = new_key
+                    env_path = os.path.join(os.path.dirname(__file__), ".env")
+                    try:
+                        with open(env_path, "w", encoding="utf-8") as f:
+                            f.write(f"# Pahadi AI Assistant Configuration\nGEMINI_API_KEY={new_key}\n")
+                    except Exception as e:
+                        print(f"Could not persist to .env: {e}")
+                    self._send_json({"success": True})
+                else:
+                    self._send_json({"success": False, "error": "अमान्य API Key"}, 400)
+
+            elif path == "/api/voice/upload":
+                import base64
+                audio_b64 = body.get("audioData", "")
+                voice_name = body.get("voiceName", "kore")
+                pitch_hz = body.get("pitchHz", 200)
+
+                if audio_b64:
+                    if "," in audio_b64:
+                        audio_b64 = audio_b64.split(",", 1)[1]
+                    audio_bytes = base64.b64decode(audio_b64)
+                    out_path = os.path.join(os.path.dirname(__file__), "custom_voice", "my_voice.wav")
+                    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+                    with open(out_path, "wb") as f:
+                        f.write(audio_bytes)
+
+                    if voice_clone_engine:
+                        voice_clone_engine.save_voice_profile({
+                            "voiceName": voice_name,
+                            "pitchHz": pitch_hz
+                        })
+
+                    self._send_json({"success": True, "size": len(audio_bytes), "voiceName": voice_name})
+                else:
+                    self._send_json({"success": False, "error": "No audio received"}, 400)
+
+            elif path == "/api/voice/synthesize":
+                text = body.get("text", "")
+                voice_name = body.get("voiceName")
+                if not text:
+                    self._send_json({"success": False, "error": "No text provided"}, 400)
+                else:
+                    try:
+                        if voice_clone_engine and voice_clone_engine.is_reference_voice_ready():
+                            res = voice_clone_engine.synthesize(text, voice_name=voice_name)
+                            self._send_json(res)
+                        else:
+                            self._send_json({
+                                "success": False,
+                                "error": "कृपया पहले अपनी आवाज़ रिकॉर्ड करें!"
+                            }, 400)
+                    except Exception as e:
+                        self._send_json({"success": False, "error": str(e)}, 500)
+
             else:
-                self._set_headers(status=400)
-                self.wfile.write(json.dumps({"success": False, "error": "अमान्य API Key"}).encode("utf-8"))
-
-        elif path == "/api/voice/upload":
-            import base64
-            audio_b64 = body.get("audioData", "")
-            if audio_b64:
-                if "," in audio_b64:
-                    audio_b64 = audio_b64.split(",", 1)[1]
-                audio_bytes = base64.b64decode(audio_b64)
-                out_path = os.path.join(os.path.dirname(__file__), "custom_voice", "my_voice.wav")
-                os.makedirs(os.path.dirname(out_path), exist_ok=True)
-                with open(out_path, "wb") as f:
-                    f.write(audio_bytes)
-                self._set_headers()
-                self.wfile.write(json.dumps({"success": True, "size": len(audio_bytes)}).encode("utf-8"))
-            else:
-                self._set_headers(status=400)
-                self.wfile.write(json.dumps({"success": False, "error": "No audio received"}).encode("utf-8"))
-
-        elif path == "/api/voice/synthesize":
-            text = body.get("text", "")
-            if not text:
-                self._set_headers(status=400)
-                self.wfile.write(json.dumps({"success": False, "error": "No text provided"}).encode("utf-8"))
-            else:
-                try:
-                    if voice_clone_engine and voice_clone_engine.is_reference_voice_ready():
-                        audio_filename = voice_clone_engine.synthesize(text)
-                        self._set_headers()
-                        self.wfile.write(json.dumps({
-                            "success": True,
-                            "audioUrl": f"/api/voice/audio/{audio_filename}"
-                        }).encode("utf-8"))
-                    else:
-                        self._set_headers(status=400)
-                        self.wfile.write(json.dumps({
-                            "success": False,
-                            "error": "कृपया पहले अपनी आवाज़ रिकॉर्ड करें!"
-                        }).encode("utf-8"))
-                except Exception as e:
-                    self._set_headers(status=500)
-                    self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode("utf-8"))
-
-        else:
-            self._set_headers("text/plain", 404)
-            self.wfile.write(b"Not Found")
+                self._send_data(b"Not Found", "text/plain", 404)
+        except Exception as e:
+            self._send_json({"error": str(e)}, 500)
 
 def run(port=PORT):
-    socketserver.TCPServer.allow_reuse_address = True
     httpd = None
     for p in [port, 8080, 8081, 8082, 8085, 8090]:
         try:
             server_address = ("", p)
-            httpd = socketserver.TCPServer(server_address, PahadiServerHandler)
+            httpd = ThreadedTCPServer(server_address, PahadiServerHandler)
             port = p
             break
         except OSError:
@@ -2462,7 +2688,6 @@ def run(port=PORT):
     print("  ⭐ Press Ctrl+C in this terminal to stop the server.")
     print("=" * 64)
 
-    # Open browser automatically
     try:
         webbrowser.open(url)
     except Exception:
