@@ -8,6 +8,7 @@ conversational intelligence with multiple persona modes, and fallback handling.
 import os
 import sys
 import json
+import re
 import urllib.request
 import urllib.error
 from pathlib import Path
@@ -44,14 +45,13 @@ PLACEHOLDER_KEYS = {"MY_GEMINI_API_KEY", "YOUR_GEMINI_API_KEY_HERE", "<YOUR_KEY>
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
+
 def load_env_file():
     """Load GEMINI_API_KEY from environment or .env file."""
-    # Use python-dotenv if available
     if load_dotenv:
         load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
         load_dotenv(dotenv_path=Path(".env"))
-    
-    # Check candidates manually as standard library fallback
+
     candidate_paths = [
         PROJECT_ROOT / ".env",
         Path.cwd() / ".env",
@@ -72,11 +72,13 @@ def load_env_file():
             except Exception:
                 pass
 
+
 def get_gemini_api_key() -> str:
     """Retrieve verified Gemini API key or empty string."""
     load_env_file()
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     return "" if key in PLACEHOLDER_KEYS else key
+
 
 def save_gemini_api_key(new_key: str) -> bool:
     """Persist new API key to runtime environment and .env file."""
@@ -95,7 +97,7 @@ def save_gemini_api_key(new_key: str) -> bool:
             continue
     return True
 
-# Initialize environment
+
 load_env_file()
 
 # Active Gemini models in preference order
@@ -104,12 +106,35 @@ CANDIDATE_MODELS = [
     "gemini-3.5-flash-lite",
     "gemini-flash-latest",
     "gemini-2.5-flash",
+    "gemini-1.5-flash"
 ]
+
+
+def extract_json(raw_text: str) -> Dict[str, Any]:
+    """Robustly extracts JSON from LLM response, stripping markdown code blocks if present."""
+    text = raw_text.strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].startswith("```"):
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+
+    try:
+        return json.loads(text)
+    except Exception:
+        start = text.find("{")
+        end = text.rfind("}")
+        if start != -1 and end != -1:
+            return json.loads(text[start:end+1])
+        raise
+
 
 def call_gemini_api(prompt: str, system_prompt: str, json_mode: bool = False) -> str:
     """
     Call Gemini Generative Language API with multiple model fallbacks.
-    Works seamlessly with requests (if installed) or urllib.request (zero-dependency).
+    Works seamlessly with requests or standard library urllib.
     """
     api_key = get_gemini_api_key()
     if not api_key:
@@ -130,13 +155,13 @@ def call_gemini_api(prompt: str, system_prompt: str, json_mode: bool = False) ->
                 "parts": [{"text": system_prompt}]
             },
             "generationConfig": {
-                "temperature": 0.3
+                "temperature": 0.35
             }
         }
         if json_mode:
             payload["generationConfig"]["responseMimeType"] = "application/json"
 
-        # 1. Try requests library if available
+        # 1. Try requests library
         if requests:
             try:
                 resp = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=25)
@@ -185,6 +210,7 @@ def call_gemini_api(prompt: str, system_prompt: str, json_mode: bool = False) ->
         raise last_err
     return ""
 
+
 def gemini_translate(source_text: str, dialect_code: str, is_reverse: bool = False) -> Dict[str, Any]:
     """
     Perform authentic dialect translation via Gemini with strict structured JSON output.
@@ -224,7 +250,11 @@ def gemini_translate(source_text: str, dialect_code: str, is_reverse: bool = Fal
         """
 
     raw_json = call_gemini_api(prompt, system_instruction, json_mode=True)
-    parsed = json.loads(raw_json)
+    try:
+        parsed = extract_json(raw_json)
+    except Exception:
+        parsed = {}
+
     return {
         "sourceText": source_text,
         "sourceLanguage": f"{dialect['displayNameHindi']} (पहाड़ी)" if is_reverse else "Hindi",
@@ -238,6 +268,7 @@ def gemini_translate(source_text: str, dialect_code: str, is_reverse: bool = Fal
         "isAiPowered": True
     }
 
+
 def gemini_chat(history: List[Dict[str, Any]], user_msg: str, mode: str, dialect_code: str) -> str:
     """
     Conversational engine with persona-tailored prompts (Elder, Student, Farmer, Standard)
@@ -245,7 +276,7 @@ def gemini_chat(history: List[Dict[str, Any]], user_msg: str, mode: str, dialect
     """
     dialect = get_dialect_meta(dialect_code)
     mode_instructions = {
-        "elder": "MODE: ELDER FRIENDLY (बुजुर्ग मित्र मोड)\n- Speak with deep warmth, respect, and reassuring simplicity using traditional greetings like 'पैलाग जी', 'नमस्कार जी', 'जय देव जी'. Keep sentences concise and gentle.",
+        "elder": "MODE: ELDER FRIENDLY (बुजुर्ग मित्र मोड)\n- Speak with deep warmth, respect, and reassuring simplicity using traditional greetings like 'पैलाग जी', 'नमस्कार जी', 'जय देव जी'. Keep sentences concise, gentle, and easily spoken aloud.",
         "student": "MODE: STUDENT HELPER (छात्र सहायक मोड)\n- Explain concepts clearly with structured points, bilingual English ↔ Hindi/Pahadi terminology, and easy-to-understand examples.",
         "farmer": "MODE: FARMER & ORCHARD HELPER (किसान व बागवान मित्र)\n- Provide expert horticultural advice on apple orchards (winter pruning, Royal Delicious/Gala varieties, Scab and Canker control, chilling hours, anti-hail net subsidy, Himcare, and SPNF natural farming).",
         "standard": "MODE: ALL-ROUND HIMALAYAN AI ASSISTANT\n- Guide with general inquiries, HRTC bus routes, weather and travel safety, cultural folklore, and living traditions across Himachal and Uttarakhand."
@@ -284,8 +315,8 @@ def gemini_chat(history: List[Dict[str, Any]], user_msg: str, mode: str, dialect
     """
 
     history_text = ""
-    for msg in history[-4:]:
-        role = "User" if msg.get("isUser") else "Assistant"
+    for msg in history[-6:]:
+        role = "User" if msg.get("isUser") or msg.get("role") == "user" else "Assistant"
         history_text += f"{role}: {msg.get('text', '')}\n"
 
     full_prompt = f"{history_text}User: {user_msg}\nAssistant:"
@@ -305,6 +336,7 @@ def translate(query: str, dialect_code: str = "kangri", is_reverse: bool = False
             print(f"Gemini translation failed, using offline fallback: {e}")
     return offline_translate(query, dialect_code, is_reverse)
 
+
 def chat(history: List[Dict[str, Any]], message: str, mode: str = "standard", dialect_code: str = "kangri") -> str:
     """
     Unified chat interface: queries Gemini LLM when online, or produces
@@ -318,10 +350,32 @@ def chat(history: List[Dict[str, Any]], message: str, mode: str = "standard", di
             print(f"Gemini chat failed, using offline message: {e}")
 
     dialect = get_dialect_meta(dialect_code)
+    
+    # Offline contextual responses
+    msg_lower = message.lower()
+    if any(w in msg_lower for w in ["सेब", "apple", "प्रूनिंग", "pruning", "बागवान", "farming"]):
+        return (
+            f"नमस्कार जी! ({dialect['displayNameHindi']})\n\n"
+            f"हिमाचल में सेब के बगीचों के लिए आवश्यक सलाह:\n"
+            f"1. प्रूनिंग (काट-छांट): दिसंबर से फरवरी के बीच जब पेड़ सुप्तावस्था (dormancy) में हों।\n"
+            f"2. चिलिंग आवर्स: उच्च गुणवत्ता के लिए 800 से 1200 घंटे 7°C से कम तापमान आवश्यक है।\n"
+            f"3. रोग नियंत्रण: स्कैब और कैंकर से बचाव हेतु कॉपर ऑक्सीक्लोराइड व बोर्डो मिश्रण का प्रयोग करें।\n"
+            f"4. योजनाएं: उद्यान विभाग द्वारा एंटी-हेल नेट और प्राकृतिक खेती (SPNF) पर अनुदान उपलब्ध है।"
+        )
+    elif any(w in msg_lower for w in ["hrtc", "बस", "bus", "मार्ग", "रूट"]):
+        return (
+            f"नमस्कार जी!\n\n"
+            f"एचआरटीसी (HRTC) बस सेवा संबंधी जानकारी:\n"
+            f"• 24x7 पूछताछ एवं नियंत्रण कक्ष: 0177-2803017\n"
+            f"• आईएसबीटी शिमला: 0177-2658322\n"
+            f"• ऑनलाइन बुकिंग: hrtchp.com या HRTC मोबाइल ऐप\n"
+            f"• विशेष सुविधा: हिमाचल राज्य के भीतर महिलाओं को सामान्य बसों के किराये में 50% की छूट दी जाती है।"
+        )
+
     return (
-        f"नमस्कार जी! ({dialect['displayNameHindi']})\n"
+        f"नमस्कार जी! ({dialect['displayNameHindi']})\n\n"
         f"आपका संदेश प्राप्त हुआ: \"{message}\"।\n\n"
-        f"वर्तमान में AI सेवा ऑफलाइन मोड में संचालित है। "
-        f"ऑनलाइन संवादी AI (Online Mode) को सक्रिय करने के लिए ऊपर 'Go Online' बटन पर क्लिक करके अपनी Gemini API Key दर्ज करें, या .env फ़ाइल में सेट करें। "
-        f"तब तक आप अनुवादक, प्रामाणिक वाक्यांश और लोकधरोहर का आनंद ले सकते हैं!"
+        f"वर्तमान में AI सेवा ऑफ़लाइन मोड में संचालित है। "
+        f"ऑनलाइन संवादी AI (Gemini AI) को सक्रिय करने के लिए सेटिंग्स में जाकर अपनी Gemini API Key दर्ज करें। "
+        f"तब तक आप अनुवादक, शब्दकोश, आपातकालीन हेल्पलाइन और लोक कथाओं का पूर्ण आनंद ले सकते हैं!"
     )

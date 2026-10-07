@@ -212,8 +212,7 @@ class PahadiServerHandler(http.server.BaseHTTPRequestHandler):
                     except Exception as e:
                         self._send_json({"success": False, "status": "error", "error": str(e)}, 500)
 
-
-            if path == "/api/translate":
+            elif path == "/api/translate":
                 query = body.get("query", "")
                 dialect_code = body.get("dialect", "kangri")
                 is_reverse = body.get("isReverse", False)
@@ -262,24 +261,6 @@ class PahadiServerHandler(http.server.BaseHTTPRequestHandler):
                     self._send_json({"success": True, "size": len(audio_bytes), "voiceName": voice_name})
                 else:
                     self._send_json({"success": False, "error": "No audio received"}, 400)
-
-            elif path == "/api/voice/synthesize":
-                text = body.get("text", "")
-                voice_name = body.get("voiceName")
-                if not text:
-                    self._send_json({"success": False, "error": "No text provided"}, 400)
-                else:
-                    try:
-                        if voice_clone_engine and voice_clone_engine.is_reference_voice_ready():
-                            res = voice_clone_engine.synthesize(text, voice_name=voice_name)
-                            self._send_json(res)
-                        else:
-                            self._send_json({
-                                "success": False,
-                                "error": "कृपया पहले अपनी आवाज़ रिकॉर्ड करें!"
-                            }, 400)
-                    except Exception as e:
-                        self._send_json({"success": False, "error": str(e)}, 500)
 
             else:
                 self._send_data(b"Not Found", "text/plain", 404)
