@@ -1,1636 +1,1125 @@
 # -*- coding: utf-8 -*-
 """
-Himalayan Pine & Saffron Themed Web Application UI
-Integrated with Gemini AI Backend, Dialect Translation, Voice Synthesis,
-Living Heritage Glossary, and Emergency Services.
+Himachal AI Assistant - Production Modern Web Interface
+Crafted with Tailwind CSS, Lucide Icons, Glassmorphism, and Deep Himalayan Pine & Saffron Design.
+Integrated with Gemini Generative AI, Real-time Dialect Chat, Voice Synthesis, and Living Glossary.
 """
 
 INDEX_HTML = """<!DOCTYPE html>
-<html lang="hi">
+<html lang="hi" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>हिमाचली व हिन्दी AI सहायक | Pahadi-Hindi AI Assistant</title>
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#0a130e" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>हिमाचली व हिन्दी AI सहायक | Hindi-Pahadi AI Assistant</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#090d16">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
 
-  <!-- Fonts: Inter & Noto Sans Devanagari -->
+  <!-- Google Fonts: Inter & Cinzel / Noto Sans Devanagari for regional typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            pine: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#228b53',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#0b391f',
+              950: '#052213',
+            },
+            saffron: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+            },
+            mist: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#090d16',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Devanagari', 'sans-serif'],
+            serif: ['Cinzel', 'Noto Sans Devanagari', 'serif'],
+          },
+          boxShadow: {
+            'glow-saffron': '0 0 20px -3px rgba(245, 158, 11, 0.25)',
+            'glow-pine': '0 0 25px -4px rgba(21, 128, 61, 0.3)',
+          }
+        }
+      }
+    }
+  </script>
 
   <style>
-    :root {
-      --pine-900: #072213;
-      --pine-800: #0b391f;
-      --pine-700: #134e2c;
-      --pine-500: #228b53;
-      --saffron-500: #e58e26;
-      --saffron-400: #f39c12;
-      --bg-dark: #0a130e;
-      --surface-glass: rgba(16, 37, 26, 0.82);
-      --surface-border: rgba(255, 255, 255, 0.12);
-      --text-main: #f5f6fa;
-      --text-muted: #a4b0be;
-      --user-bubble: #174229;
-      --bot-bubble: rgba(22, 45, 33, 0.9);
-      --radius-lg: 16px;
-      --radius-sm: 8px;
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.4);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.3);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(245, 158, 11, 0.5);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Noto Sans Devanagari', 'Inter', -apple-system, sans-serif;
-    }
-
-    body {
-      background-color: var(--bg-dark);
-      background-image: 
-        radial-gradient(circle at 10% 20%, rgba(19, 78, 44, 0.4) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(229, 142, 38, 0.18) 0%, transparent 45%),
-        radial-gradient(circle at 50% 50%, rgba(7, 34, 19, 0.6) 0%, transparent 80%);
-      color: var(--text-main);
-      height: 100vh;
-      display: flex;
-      overflow: hidden;
-    }
-
-    /* Layout Sidebar */
-    .sidebar {
-      width: 320px;
-      background: var(--surface-glass);
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.78);
       backdrop-filter: blur(16px);
-      border-right: 1px solid var(--surface-border);
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-      gap: 16px;
-      z-index: 20;
-      transition: transform 0.3s ease;
-      overflow-y: auto;
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .brand-icon {
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg, var(--saffron-500), var(--pine-500));
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(229, 142, 38, 0.3);
-      flex-shrink: 0;
-    }
-
-    .brand-title h1 {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1.2;
-    }
-
-    .brand-title p {
-      font-size: 0.75rem;
-      color: var(--saffron-400);
-      font-weight: 500;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.72rem;
-      padding: 3px 8px;
-      border-radius: 100px;
-      background: rgba(34, 139, 83, 0.2);
-      border: 1px solid rgba(34, 139, 83, 0.4);
-      color: #4ade80;
-    }
-    .status-pill.offline {
-      background: rgba(245, 158, 11, 0.15);
-      border-color: rgba(245, 158, 11, 0.3);
-      color: #fcd34d;
-    }
-    .status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: currentColor;
-    }
-
-    .section-label {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .persona-select {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--surface-border);
-      color: var(--text-main);
-      padding: 8px 10px;
-      border-radius: var(--radius-sm);
-      font-size: 0.85rem;
-      outline: none;
-      cursor: pointer;
-    }
-    .persona-select option {
-      background: #0f241a;
-      color: #fff;
-    }
-
-    .dialect-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 38vh;
-      overflow-y: auto;
-      padding-right: 2px;
-    }
-    .dialect-list::-webkit-scrollbar {
-      width: 4px;
-    }
-    .dialect-list::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-    }
-
-    .dialect-btn {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--surface-border);
-      color: var(--text-main);
-      padding: 9px 12px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: all 0.2s ease;
-      font-size: 0.86rem;
-      text-align: left;
-    }
-
-    .dialect-btn:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: var(--pine-500);
-      transform: translateX(2px);
-    }
-
-    .dialect-btn.active {
-      background: linear-gradient(90deg, rgba(19, 78, 44, 0.9), rgba(11, 57, 31, 0.95));
-      border-color: var(--saffron-500);
-      color: #fff;
-      font-weight: 600;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
-
-    .dialect-badge {
-      font-size: 0.68rem;
-      padding: 2px 6px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 4px;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-
-    .dialect-btn.active .dialect-badge {
-      background: var(--saffron-500);
-      color: #111;
-      font-weight: bold;
-    }
-
-    .sidebar-actions {
-      margin-top: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--surface-border);
-      color: var(--text-main);
-      padding: 8px 14px;
-      border-radius: var(--radius-sm);
-      font-size: 0.84rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.2s;
-    }
-
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.25);
-    }
-
-    /* Main Chat Area */
-    .main-chat {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      background: transparent;
-    }
-
-    .chat-header {
-      padding: 14px 22px;
-      background: var(--surface-glass);
+    .glass-card {
+      background: rgba(30, 41, 59, 0.55);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--surface-border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .mobile-menu-btn {
-      display: none;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--surface-border);
-      color: #fff;
-      font-size: 1.1rem;
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-    }
-
-    .current-dialect-info h2 {
-      font-size: 1.05rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .current-dialect-info p {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .btn-icon-top {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--surface-border);
-      color: var(--text-main);
-      padding: 6px 12px;
-      border-radius: var(--radius-sm);
-      font-size: 0.8rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: 0.2s;
-    }
-    .btn-icon-top:hover {
-      background: rgba(255, 255, 255, 0.12);
-    }
-    .btn-icon-top.active-toggle {
-      background: rgba(229, 142, 38, 0.25);
-      border-color: var(--saffron-500);
-      color: var(--saffron-400);
-    }
-
-    /* Translation Banner / Direct Switcher */
-    .view-switcher-bar {
-      padding: 8px 22px;
-      background: rgba(11, 57, 31, 0.35);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 0.82rem;
-    }
-
-    .view-tabs {
-      display: flex;
-      gap: 6px;
-    }
-    .view-tab {
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--text-muted);
-      padding: 4px 10px;
-      border-radius: 100px;
-      cursor: pointer;
-      font-size: 0.78rem;
-      transition: all 0.2s;
-    }
-    .view-tab.active {
-      background: var(--pine-700);
-      color: #fff;
-      border-color: rgba(34, 139, 83, 0.6);
-    }
-
-    /* Chat Messages */
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .message {
-      max-width: 78%;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      animation: fadeIn 0.25s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .message.user {
-      align-self: flex-end;
-    }
-
-    .message.bot {
-      align-self: flex-start;
-    }
-
-    .bubble {
-      padding: 13px 18px;
-      border-radius: var(--radius-lg);
-      font-size: 0.94rem;
-      line-height: 1.55;
-      border: 1px solid var(--surface-border);
-      position: relative;
-      word-break: break-word;
-      white-space: pre-wrap;
-    }
-
-    .message.user .bubble {
-      background: var(--user-bubble);
-      border-bottom-right-radius: 4px;
-      border-color: rgba(34, 139, 83, 0.5);
-      color: #fff;
-    }
-
-    .message.bot .bubble {
-      background: var(--bot-bubble);
-      border-bottom-left-radius: 4px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-    }
-
-    .pronunciation {
-      font-size: 0.8rem;
-      color: var(--saffron-400);
-      font-style: italic;
-      margin-top: 8px;
-      border-top: 1px dashed rgba(255, 255, 255, 0.12);
-      padding-top: 6px;
-    }
-
-    .cultural-context-box {
-      font-size: 0.78rem;
-      color: #94a3b8;
-      margin-top: 6px;
-      background: rgba(0, 0, 0, 0.25);
-      padding: 6px 10px;
-      border-radius: 6px;
-      border-left: 2px solid var(--saffron-500);
-    }
-
-    .message-meta {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      padding: 0 4px;
-    }
-
-    .action-icon-btn {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 0.78rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: color 0.2s;
-    }
-
-    .action-icon-btn:hover {
-      color: #fff;
-    }
-
-    .typing-indicator {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
-    }
-    .typing-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--saffron-400);
-      border-radius: 50%;
-      animation: bounce 1.2s infinite ease-in-out;
-    }
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes bounce {
-      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-      40% { transform: scale(1); opacity: 1; }
-    }
-
-    /* Translator Tab View (Dedicated Mode) */
-    .translator-view {
-      display: none;
-      flex: 1;
-      padding: 24px;
-      overflow-y: auto;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .translator-view.active {
-      display: flex;
-    }
-
-    .trans-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-    }
-    @media (max-width: 768px) {
-      .trans-grid { grid-template-columns: 1fr; }
-    }
-
-    .trans-card {
-      background: var(--bot-bubble);
-      border: 1px solid var(--surface-border);
-      border-radius: var(--radius-lg);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .trans-card textarea {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--surface-border);
-      border-radius: var(--radius-sm);
-      color: #fff;
-      padding: 12px;
-      font-size: 0.95rem;
-      min-height: 140px;
-      outline: none;
-      resize: vertical;
-    }
-    .trans-card textarea:focus {
-      border-color: var(--saffron-500);
-    }
-
-    /* Chat Input Bar */
-    .chat-input-bar {
-      padding: 14px 22px;
-      background: var(--surface-glass);
-      backdrop-filter: blur(12px);
-      border-top: 1px solid var(--surface-border);
-      display: flex;
-      gap: 10px;
-      align-items: flex-end;
-    }
-
-    .input-wrapper {
-      flex: 1;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--surface-border);
-      border-radius: var(--radius-lg);
-      display: flex;
-      align-items: center;
-      padding: 6px 12px;
-      gap: 8px;
-      transition: border-color 0.2s;
-    }
-
-    .input-wrapper:focus-within {
-      border-color: var(--saffron-500);
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    .chat-textarea {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      font-size: 0.94rem;
-      outline: none;
-      resize: none;
-      max-height: 120px;
-      min-height: 24px;
-      line-height: 1.45;
-    }
-
-    .mic-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 1.1rem;
-      padding: 4px;
-      border-radius: 50%;
-      transition: all 0.2s;
-    }
-    .mic-btn:hover {
-      color: #fff;
-    }
-    .mic-btn.recording {
-      color: #ef4444;
-      animation: pulse 1s infinite alternate;
-    }
-
-    @keyframes pulse {
-      from { transform: scale(1); }
-      to { transform: scale(1.2); }
-    }
-
-    .send-btn {
-      background: linear-gradient(135deg, var(--saffron-500), var(--pine-500));
-      border: none;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 1.1rem;
-      transition: transform 0.1s, opacity 0.2s;
-      flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(229, 142, 38, 0.3);
-    }
-
-    .send-btn:active {
-      transform: scale(0.94);
-    }
-
-    /* Modal Overlay & Dialogs */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(8px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 99;
-      padding: 16px;
-    }
-
-    .modal-card {
-      background: #0d2217;
-      border: 1px solid var(--surface-border);
-      border-radius: var(--radius-lg);
-      width: 100%;
-      max-width: 580px;
-      max-height: 82vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
-      animation: modalIn 0.25s ease-out;
-    }
-
-    @keyframes modalIn {
-      from { transform: scale(0.95); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    .modal-header {
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--surface-border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(0, 0, 0, 0.2);
-    }
-
-    .modal-body {
-      padding: 16px 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .dict-entry {
-      background: rgba(255, 255, 255, 0.03);
-      padding: 12px 14px;
-      border-radius: var(--radius-sm);
       border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .dict-word {
-      font-weight: 600;
-      color: var(--saffron-400);
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
+    /* Himalayan Mountain Pattern Accent */
+    .himalaya-pattern {
+      background-image: 
+        radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0),
+        radial-gradient(circle at 10% 20%, rgba(19, 78, 44, 0.35) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(229, 142, 38, 0.15) 0%, transparent 45%);
+      background-size: 24px 24px, 100% 100%, 100% 100%;
     }
 
-    .dict-meaning {
-      font-size: 0.88rem;
-      color: #e2e8f0;
-      margin-top: 4px;
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 0.8; }
     }
-    .dict-note {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    .key-input {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--surface-border);
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: var(--radius-sm);
-      font-size: 0.9rem;
-      outline: none;
-    }
-    .key-input:focus {
-      border-color: var(--saffron-500);
-    }
-
-    .btn-primary-action {
-      background: linear-gradient(135deg, var(--saffron-500), var(--pine-500));
-      border: none;
-      color: #fff;
-      padding: 10px 18px;
-      border-radius: var(--radius-sm);
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: all 0.2s;
-    }
-
-    /* Voice Recording Modal */
-    .audio-visualizer {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      height: 60px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: var(--radius-sm);
-      margin: 10px 0;
-    }
-    .visualizer-bar {
-      width: 6px;
-      height: 20px;
-      background: var(--saffron-400);
-      border-radius: 3px;
-      transition: height 0.1s ease;
-    }
-
-    @media (max-width: 768px) {
-      .sidebar {
-        position: absolute;
-        left: -330px;
-        height: 100%;
-        box-shadow: 10px 0 30px rgba(0,0,0,0.5);
-      }
-      .sidebar.open {
-        transform: translateX(330px);
-      }
-      .mobile-menu-btn {
-        display: block;
-      }
-      .message {
-        max-width: 90%;
-      }
-      .header-actions {
-        display: none;
-      }
+    .animate-pulse-ring {
+      animation: pulse-ring 3s infinite ease-in-out;
     }
   </style>
 </head>
-<body>
+<body class="bg-mist-950 text-slate-100 font-sans min-h-screen flex flex-col himalaya-pattern selection:bg-saffron-500/30 selection:text-saffron-400">
 
-  <!-- Sidebar / Dialect Switcher -->
-  <aside class="sidebar" id="sidebar">
-    <div class="brand">
-      <div class="brand-icon">🏔️</div>
-      <div class="brand-title">
-        <h1>पहाड़ी-हिन्दी AI</h1>
-        <p>Himalayan Dialects Assistant</p>
-      </div>
-    </div>
-
-    <div>
-      <div class="section-label">
-        <span>सिस्टम स्थिति</span>
-        <span class="status-pill offline" id="statusPill">
-          <span class="status-dot"></span>
-          <span id="statusText">ऑफ़लाइन</span>
-        </span>
-      </div>
-      <select id="personaModeSelect" class="persona-select" onchange="changePersonaMode(this.value)">
-        <option value="standard">🏔️ सर्व-सहायक मोड (Standard)</option>
-        <option value="elder">👵 बुजुर्ग मित्र मोड (Elder Friendly)</option>
-        <option value="student">📚 छात्र सहायक मोड (Student Helper)</option>
-        <option value="farmer">🍎 बागवान व किसान मित्र (Apple Farmer)</option>
-      </select>
-    </div>
-
-    <div>
-      <div class="section-label">
-        <span>बोली चुनें (Select Dialect)</span>
-        <span id="dialectCount" style="font-size:0.68rem; color:var(--saffron-400);">10 बोलियां</span>
-      </div>
-      <div class="dialect-list" id="dialectList">
-        <button class="dialect-btn active" onclick="setDialect('hindi', 'मानक हिन्दी', 'राजभाषा / Standard Hindi', this)">
-          <span>मानक हिन्दी</span>
-          <span class="dialect-badge">Hindi</span>
+  <!-- Main Top Header -->
+  <header class="sticky top-0 z-40 w-full glass-panel border-b border-white/10 px-4 lg:px-8 py-3 transition-colors duration-200">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      
+      <!-- Brand & Status -->
+      <div class="flex items-center gap-3">
+        <button id="sidebarToggleBtn" class="lg:hidden p-2 rounded-xl hover:bg-slate-800/60 text-slate-300">
+          <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
-        <button class="dialect-btn" onclick="setDialect('kangri', 'कांगड़ी (Kangri)', 'कांगड़ा घाटी, हमीरपुर, ऊना', this)">
-          <span>कांगड़ी (Kangri)</span>
-          <span class="dialect-badge">Kangra</span>
-        </button>
-        <button class="dialect-btn" onclick="setDialect('mandeali', 'मंडीयाली (Mandeali)', 'मंडी, सुंदरनगर, छोटी काशी', this)">
-          <span>मंडीयाली (Mandeali)</span>
-          <span class="dialect-badge">Mandi</span>
-        </button>
-        <button class="dialect-btn" onclick="setDialect('kullui', 'कुल्लवी (Kullui)', 'कुल्लू घाटी, मनाली, बंजार', this)">
-          <span>कुल्लवी (Kullui)</span>
-          <span class="dialect-badge">Kullu</span>
-        </button>
-        <button class="dialect-btn" onclick="setDialect('shimla_pahari', 'शिमला / महासूवी', 'शिमला, ठियोग, कोटखाई, रोहड़ू', this)">
-          <span>महासूवी (Mahasuvi)</span>
-          <span class="dialect-badge">Shimla</span>
-        </button>
-        <button class="dialect-btn" onclick="setDialect('chambeali', 'चम्बियाली (Chambeali)', 'चंबा, रावी घाटी, भरमौर', this)">
-          <span>चम्बियाली (Chambeali)</span>
-          <span class="dialect-badge">Chamba</span>
-        </button>
-        <button class="dialect-btn" onclick="setDialect('sirmauri', 'सिरमौरी (Sirmauri)', 'नाहन, रेणुका जी, गिरि-पार (हाटी)', this)">
-          <span>सिरमौरी (Sirmauri)</span>
-          <span class="dialect-badge">Sirmaur</span>
-        </button>
-        <button class="dialect-btn" onclick="setDialect('garhwali', 'गढ़वाली (Garhwali)', 'श्रीनगर, पौड़ी, टिहरी, चमोली', this)">
-          <span>गढ़वाली (Garhwali)</span>
-          <span class="dialect-badge">Garhwal</span>
-        </button>
-        <button class="dialect-btn" onclick="setDialect('kumaoni', 'कुमाऊँनी (Kumaoni)', 'अल्मोड़ा, नैनीताल, पिथौरागढ़', this)">
-          <span>कुमाऊँनी (Kumaoni)</span>
-          <span class="dialect-badge">Kumaon</span>
-        </button>
-        <button class="dialect-btn" onclick="setDialect('dogri', 'डोगरी (Dogri)', 'जम्मू व शिवालिक क्षेत्र', this)">
-          <span>डोगरी (Dogri)</span>
-          <span class="dialect-badge">Dogri</span>
-        </button>
-        <button class="dialect-btn" onclick="setDialect('jaunsari', 'जौनसारी (Jaunsari)', 'जौनसार-बावर, चकराता', this)">
-          <span>जौनसारी (Jaunsari)</span>
-          <span class="dialect-badge">Jaunsar</span>
-        </button>
-      </div>
-    </div>
-
-    <div class="sidebar-actions">
-      <button class="btn-secondary" onclick="openGlossaryModal()">
-        📖 शब्दकोश व वाक्यांश (Glossary)
-      </button>
-      <button class="btn-secondary" onclick="openHeritageModal()">
-        🏛️ लोक धरोहर व कहानियां (Lore)
-      </button>
-      <button class="btn-secondary" onclick="openEmergencyModal()">
-        🚨 आपातकालीन नंबर (Helplines)
-      </button>
-      <button class="btn-secondary" onclick="openVoiceModal()">
-        🎙️ आवाज़ क्लोनिंग (Custom Voice)
-      </button>
-      <button class="btn-secondary" style="border-color:rgba(229, 142, 38, 0.4);" onclick="openKeyModal()">
-        🔑 API Key सेट करें
-      </button>
-    </div>
-  </aside>
-
-  <!-- Main Chat & Workspace Area -->
-  <main class="main-chat">
-    <header class="chat-header">
-      <div class="header-left">
-        <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
-        <div class="current-dialect-info">
-          <h2 id="currentDialectTitle">मानक हिन्दी <span>•</span> <small style="font-size:0.8rem; color:var(--saffron-400);">सक्रिय</small></h2>
-          <p id="currentDialectSub">राजभाषा / Standard Hindi</p>
+        <div class="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-pine-700 to-pine-900 border border-pine-700/60 shadow-glow-pine">
+          <i data-lucide="mountain-snow" class="w-5 h-5 text-saffron-400"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+              <span>हिमाचल</span>
+              <span class="text-saffron-400 font-serif">AI</span>
+            </h1>
+            <span id="headerStatusPill" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span id="headerStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+              <span id="headerStatusText">ऑनलाइन • 8080</span>
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">मानक हिन्दी व पहाड़ी बोलियों का संवादात्मक सहायक</p>
         </div>
       </div>
-      <div class="header-actions">
-        <button class="btn-icon-top" id="phoneticsToggleBtn" onclick="togglePronunciation()">🔤 उच्चारण (Phonetics)</button>
-        <button class="btn-icon-top" onclick="switchView('translator')">🔄 सीधा अनुवादक</button>
-        <button class="btn-icon-top" onclick="clearChat()">🗑️ साफ़ करें</button>
-      </div>
-    </header>
 
-    <!-- Mode Banner -->
-    <div class="view-switcher-bar">
-      <div class="view-tabs">
-        <button class="view-tab active" id="tabChat" onclick="switchView('chat')">💬 संवाद (AI Chat)</button>
-        <button class="view-tab" id="tabTrans" onclick="switchView('translator')">🔤 अनुवादक (Translator)</button>
+      <!-- Dialect Selector and Action Tools -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Dialect Switcher -->
+        <div class="relative">
+          <select id="dialectSelect" class="bg-slate-900/80 hover:bg-slate-800/90 text-slate-200 text-xs sm:text-sm font-medium py-1.5 sm:py-2 pl-3 pr-8 rounded-xl border border-white/10 shadow-sm focus:outline-none focus:ring-2 focus:ring-saffron-500/50 appearance-none cursor-pointer">
+            <option value="hindi" selected>मानक हिन्दी (Hindi)</option>
+            <option value="kangri">कांगड़ी (Kangri)</option>
+            <option value="mandeali">मण्डयाली (Mandeali)</option>
+            <option value="kullui">कुलवी (Kullui)</option>
+            <option value="shimla_pahari">महासूवी / शिमला (Mahasuvi)</option>
+            <option value="chambeali">चम्बियाली (Chambeali)</option>
+            <option value="sirmauri">सिरमौरी (Sirmauri)</option>
+            <option value="garhwali">गढ़वाली (Garhwali)</option>
+            <option value="kumaoni">कुमाऊँनी (Kumaoni)</option>
+            <option value="dogri">डोगरी (Dogri)</option>
+            <option value="jaunsari">जौनसारी (Jaunsari)</option>
+          </select>
+          <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        </div>
+
+        <!-- Dictionary Glossary Modal Trigger -->
+        <button id="openGlossaryBtn" title="पहाड़ी शब्दकोश (Glossary)" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-saffron-400 flex items-center gap-1.5 text-xs font-medium transition">
+          <i data-lucide="book-open-text" class="w-4 h-4"></i>
+          <span class="hidden md:inline">शब्दकोश</span>
+        </button>
+
+        <!-- Emergency Contacts Trigger -->
+        <button id="openEmergencyBtn" title="आपातकालीन नंबर (Helplines)" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-white/10 text-rose-300 hover:text-rose-400 flex items-center gap-1.5 text-xs font-medium transition">
+          <i data-lucide="phone-call" class="w-4 h-4"></i>
+          <span class="hidden md:inline">हेल्पलाइन</span>
+        </button>
+
+        <!-- Settings Modal Trigger -->
+        <button id="openSettingsBtn" title="सेटिंग्स (Settings)" class="p-2 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white transition">
+          <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+        </button>
       </div>
-      <div style="color:var(--saffron-400); font-size:0.75rem;" id="activePersonaBadge">
-        मोड: सर्व-सहायक
-      </div>
+
     </div>
+  </header>
 
-    <!-- Chat Messages Stream -->
-    <div class="chat-messages" id="chatMessages">
-      <div class="message bot">
-        <div class="bubble">
-          नमस्कार जी! 🙏 पहाड़ी संगम AI में आपका स्वागत है।
+  <!-- Main Body Wrapper -->
+  <div class="flex-1 max-w-7xl w-full mx-auto flex overflow-hidden relative">
+
+    <!-- Sidebar: Conversation History & Regional Knowledge -->
+    <aside id="chatSidebar" class="fixed lg:static inset-y-0 left-0 z-30 w-72 bg-mist-900/95 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none border-r border-white/10 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+      <div class="p-4 border-b border-white/10 flex items-center justify-between">
+        <button id="newChatBtn" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-pine-700 to-pine-800 hover:from-pine-600 hover:to-pine-700 text-white font-medium text-sm shadow-md transition group">
+          <i data-lucide="plus-circle" class="w-4 h-4 group-hover:rotate-90 transition-transform"></i>
+          <span>नया संवाद (New Chat)</span>
+        </button>
+        <button id="closeSidebarBtn" class="lg:hidden ml-2 p-2 text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Dialect Region Selector Cards -->
+      <div class="p-4 flex-1 overflow-y-auto space-y-4">
+        <div>
+          <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">सक्रिय बोली की विशेषता</span>
+          <div id="dialectBadgeCard" class="p-3 rounded-2xl glass-card border border-saffron-500/20 bg-saffron-500/5">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="w-2 h-2 rounded-full bg-saffron-400"></span>
+              <h4 id="activeDialectTitle" class="text-sm font-semibold text-saffron-300">मानक हिन्दी</h4>
+            </div>
+            <p id="activeDialectDesc" class="text-xs text-slate-300 leading-relaxed">
+              पारंपरिक व आधुनिक शिष्टाचार युक्त शुद्ध हिन्दी वार्तालाप।
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">संवाद विधा (Persona Mode)</span>
+          <select id="personaModeSelect" class="w-full bg-slate-900/80 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-saffron-500">
+            <option value="standard">🏔️ सर्व-सहायक (All-Round)</option>
+            <option value="elder">👵 बुजुर्ग मित्र (Elder Friendly)</option>
+            <option value="student">📚 छात्र सहायक (Student Helper)</option>
+            <option value="farmer">🍎 बागवान व किसान मित्र (Apple Farmer)</option>
+          </select>
+        </div>
+
+        <div>
+          <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">हाल के संवाद (Recent Topics)</span>
+          <div id="recentChatsList" class="space-y-1 text-xs">
+            <button class="w-full text-left px-3 py-2 rounded-xl bg-slate-800/40 text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2 transition" onclick="triggerQuickPrompt('मण्डयाली में अभिवादन और हाल-चाल कैसे पूछते हैं?')">
+              <i data-lucide="message-square" class="w-3.5 h-3.5 text-saffron-400 shrink-0"></i>
+              <span class="truncate">मण्डयाली में अभिवादन के नियम</span>
+            </button>
+            <button class="w-full text-left px-3 py-2 rounded-xl text-slate-400 hover:bg-slate-800/40 hover:text-slate-200 flex items-center gap-2 transition" onclick="triggerQuickPrompt('कांगड़ा किला और धौलाधार पर्वत का सांस्कृतिक इतिहास बताएं।')">
+              <i data-lucide="message-square" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i>
+              <span class="truncate">कांगड़ा किला और इतिहास</span>
+            </button>
+            <button class="w-full text-left px-3 py-2 rounded-xl text-slate-400 hover:bg-slate-800/40 hover:text-slate-200 flex items-center gap-2 transition" onclick="triggerQuickPrompt('शिमला व किन्नौर में सेब के बगीचों में प्रूनिंग और खाद प्रबंधन कैसे करें?')">
+              <i data-lucide="message-square" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i>
+              <span class="truncate">शिमला सेब कटाई की ऋतु</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <div class="p-3 rounded-2xl bg-slate-900/60 border border-white/5 space-y-2">
+            <div class="flex items-center justify-between text-xs text-slate-300">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="cpu" class="w-3.5 h-3.5 text-pine-500"></i> AI Inference
+              </span>
+              <span class="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">Gemini 3.7 / Offline</span>
+            </div>
+            <div class="text-[11px] text-slate-400">
+              Voice: <span class="text-slate-200 font-mono">Neural TTS + Calibrated Pitch</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clear Chat & Quick Info -->
+      <div class="p-4 border-t border-white/10 flex items-center justify-between">
+        <button id="clearChatBtn" class="flex items-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 transition">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>संवाद साफ करें</span>
+        </button>
+        <span class="text-[11px] text-slate-500">v2.0 • देवनागरी</span>
+      </div>
+    </aside>
+
+    <!-- Main Chat Workspace -->
+    <main class="flex-1 flex flex-col h-[calc(100vh-65px)] min-w-0">
+      
+      <!-- Chat Messages Scroll Area -->
+      <div id="chatContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+        
+        <!-- Welcome Hero (Empty State initially visible) -->
+        <div id="welcomeHero" class="my-6 max-w-2xl mx-auto text-center space-y-4">
+          <div class="inline-flex p-3 rounded-3xl bg-gradient-to-b from-saffron-500/20 to-transparent border border-saffron-500/30 text-saffron-400 mb-1">
+            <i data-lucide="sparkles" class="w-8 h-8"></i>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            नमस्ते जी! क्या मदद कर सकता हूँ?
+          </h2>
+          <p class="text-sm sm:text-base text-slate-300 leading-relaxed max-w-lg mx-auto">
+            यह AI सहायक हिमाचल प्रदेश व उत्तराखंड की बोलियों—कांगड़ी, मण्डयाली, महासूवी, कुलवी, चम्बियाली, गढ़वाली, कुमाऊँनी—व मानक हिन्दी में अनुवाद और संवादात्मक मार्गदर्शन प्रदान करता है।
+          </p>
+
+          <!-- Suggested Quick Prompts Grid -->
+          <div class="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-left">
+            <button class="quick-prompt-btn p-3 rounded-2xl glass-card hover:border-saffron-500/40 hover:bg-slate-800/80 transition group flex items-start gap-3" data-prompt="कांगड़ी बोली में रोजमर्रा के हाल-चाल कैसे पूछते हैं? उदाहरण देकर समझाओ।">
+              <span class="p-2 rounded-xl bg-pine-900/60 text-pine-500 group-hover:text-saffron-400 transition">
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+              </span>
+              <div>
+                <div class="text-xs font-semibold text-slate-200 group-hover:text-saffron-300">कांगड़ी में हाल-चाल पूछना</div>
+                <div class="text-[11px] text-slate-400 line-clamp-1">दैनिक संवाद और अभिवादन के वाक्य</div>
+              </div>
+            </button>
+
+            <button class="quick-prompt-btn p-3 rounded-2xl glass-card hover:border-saffron-500/40 hover:bg-slate-800/80 transition group flex items-start gap-3" data-prompt="मण्डयाली में एक छोटी लोक कथा या कहावत सुनाएं और उसका हिन्दी अर्थ भी बताएं।">
+              <span class="p-2 rounded-xl bg-pine-900/60 text-pine-500 group-hover:text-saffron-400 transition">
+                <i data-lucide="scroll" class="w-4 h-4"></i>
+              </span>
+              <div>
+                <div class="text-xs font-semibold text-slate-200 group-hover:text-saffron-300">पहाड़ी लोक कथा / कहावत</div>
+                <div class="text-[11px] text-slate-400 line-clamp-1">मण्डयाली कथा व हिन्दी अनुवाद</div>
+              </div>
+            </button>
+
+            <button class="quick-prompt-btn p-3 rounded-2xl glass-card hover:border-saffron-500/40 hover:bg-slate-800/80 transition group flex items-start gap-3" data-prompt="हिमाचल के ऊपरी क्षेत्रों (शिमला/किन्नौर) में सेब की मुख्य किस्में कौन सी हैं और उनकी देखभाल कैसे करें?">
+              <span class="p-2 rounded-xl bg-pine-900/60 text-pine-500 group-hover:text-saffron-400 transition">
+                <i data-lucide="apple" class="w-4 h-4"></i>
+              </span>
+              <div>
+                <div class="text-xs font-semibold text-slate-200 group-hover:text-saffron-300">हिमाचली सेब और बागवानी</div>
+                <div class="text-[11px] text-slate-400 line-clamp-1">प्रमुख किस्में, प्रूनिंग व सुरक्षा निर्देश</div>
+              </div>
+            </button>
+
+            <button class="quick-prompt-btn p-3 rounded-2xl glass-card hover:border-saffron-500/40 hover:bg-slate-800/80 transition group flex items-start gap-3" data-prompt="महासूवी (शिमला पहाड़ी) बोली के 5 आम शब्द और उनके मानक हिन्दी अर्थ बताएं।">
+              <span class="p-2 rounded-xl bg-pine-900/60 text-pine-500 group-hover:text-saffron-400 transition">
+                <i data-lucide="languages" class="w-4 h-4"></i>
+              </span>
+              <div>
+                <div class="text-xs font-semibold text-slate-200 group-hover:text-saffron-300">महासूवी शब्दकोश</div>
+                <div class="text-[11px] text-slate-400 line-clamp-1">शिमला क्षेत्र के प्रचलित स्थानीय शब्द</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat History Stream -->
+        <div id="messagesList" class="max-w-3xl mx-auto space-y-5">
+          <!-- Dynamically populated messages -->
+        </div>
+
+        <!-- Typing Indicator -->
+        <div id="typingIndicator" class="max-w-3xl mx-auto hidden">
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-xl bg-pine-800/80 border border-pine-700/50 flex items-center justify-center text-saffron-400 shrink-0">
+              <i data-lucide="sparkles" class="w-4 h-4 animate-spin"></i>
+            </div>
+            <div class="p-4 rounded-2xl glass-card border border-white/10 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-saffron-400 animate-bounce"></span>
+              <span class="w-2 h-2 rounded-full bg-saffron-400 animate-bounce [animation-delay:0.2s]"></span>
+              <span class="w-2 h-2 rounded-full bg-saffron-400 animate-bounce [animation-delay:0.4s]"></span>
+              <span class="text-xs text-slate-400 ml-2">पहाड़ी में उत्तर तैयार हो रहा है...</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Chat Input Bar -->
+      <div class="p-4 bg-gradient-to-t from-mist-950 via-mist-950/95 to-transparent border-t border-white/5">
+        <div class="max-w-3xl mx-auto">
           
-आप अपनी पसंदीदा पहाड़ी बोली (कांगड़ी, मण्डीयाली, कुल्लवी, शिमला/महासूवी, गढ़वाली, कुमाऊँनी, आदि) या मानक हिन्दी में सवाल पूछ सकते हैं, अनुवाद कर सकते हैं, या सेब बागवानी और पर्यटन की जानकारी प्राप्त कर सकते हैं।
-          <div class="pronunciation" style="display:none;">
-            Namaskar ji! Pahadi Sangam AI mein aapka swagat hai.
+          <!-- Transliteration / Roman script helper bar -->
+          <div class="flex items-center justify-between text-xs px-2 mb-2 text-slate-400">
+            <div class="flex items-center gap-2">
+              <span id="translitBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800/70 border border-white/5 text-[11px] text-slate-300">
+                <i data-lucide="sparkles" class="w-3 h-3 text-saffron-400"></i>
+                <span id="targetDialectNameDisplay">मानक हिन्दी</span>
+              </span>
+              <button id="togglePhoneticsBtn" class="text-[11px] text-slate-400 hover:text-saffron-400 flex items-center gap-1 transition">
+                <i data-lucide="spell-check" class="w-3 h-3"></i>
+                <span>उच्चारण सहायक (Phonetics)</span>
+              </button>
+            </div>
+            <span class="text-[11px] text-slate-500 hidden sm:inline">Shift + Enter नई पंक्ति के लिए</span>
           </div>
-        </div>
-        <div class="message-meta">
-          <span>AI सहायक</span>
-          <button class="action-icon-btn" onclick="speakText(this)">🔊 बोलें</button>
-          <button class="action-icon-btn" onclick="copyText(this)">📋 कॉपी</button>
-        </div>
-      </div>
-    </div>
 
-    <!-- Dedicated Direct Translator View -->
-    <div class="translator-view" id="translatorView">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="color:#fff;">द्वि-दिशा पहाड़ी अनुवादक (Bidirectional Translator)</h3>
-        <label style="font-size:0.85rem; color:var(--saffron-400); cursor:pointer;">
-          <input type="checkbox" id="reverseTranslateCheck" onchange="toggleTranslateDirection()"> पहाड़ी ➔ हिन्दी (Reverse)
-        </label>
-      </div>
-      <div class="trans-grid">
-        <div class="trans-card">
-          <label style="font-weight:600; color:var(--text-muted);" id="transSourceLabel">स्रोत पाठ (हिंदी):</label>
-          <textarea id="transInput" placeholder="यहाँ टेक्स्ट लिखें (उदा: आप कैसे हैं? / मौसम कैसा है?)"></textarea>
-          <button class="btn-primary-action" onclick="handleDirectTranslate()">अनुवाद करें (Translate)</button>
-        </div>
-        <div class="trans-card">
-          <label style="font-weight:600; color:var(--text-muted);" id="transTargetLabel">अनुवाद परिणाम (पहाड़ी):</label>
-          <div id="transOutput" style="background:rgba(0,0,0,0.3); border:1px solid var(--surface-border); border-radius:var(--radius-sm); padding:14px; min-height:140px; color:#fff; font-size:1.05rem; white-space:pre-wrap;">
-            परिणाम यहाँ दिखाई देगा...
+          <!-- Input bar wrapper -->
+          <div class="relative glass-card rounded-2xl border border-white/10 focus-within:border-saffron-500/50 focus-within:ring-2 focus-within:ring-saffron-500/20 shadow-xl transition-all duration-200">
+            <textarea
+              id="messageInput"
+              rows="1"
+              placeholder="यहाँ हिन्दी या पहाड़ी में लिखें... (उदा: तुसां केड़े हाल चाला न? / सेब में प्रूनिंग कब करें?)"
+              class="w-full bg-transparent text-slate-100 placeholder-slate-500 text-sm sm:text-base py-3.5 pl-4 pr-24 resize-none max-h-36 focus:outline-none"
+            ></textarea>
+
+            <div class="absolute right-2 bottom-2 flex items-center gap-1">
+              <!-- Speech Recognition Voice Toggle -->
+              <button
+                id="micBtn"
+                title="आवाज से बोलें (Voice Input)"
+                class="p-2 rounded-xl text-slate-400 hover:text-saffron-400 hover:bg-white/5 transition"
+              >
+                <i data-lucide="mic" class="w-4 h-4"></i>
+              </button>
+
+              <!-- Send Button -->
+              <button
+                id="sendBtn"
+                title="संदेश भेजें"
+                class="p-2 rounded-xl bg-gradient-to-r from-pine-700 to-pine-800 hover:from-saffron-500 hover:to-saffron-600 text-white transition shadow-md"
+              >
+                <i data-lucide="arrow-up" class="w-4 h-4"></i>
+              </button>
+            </div>
           </div>
-          <div id="transPhonetic" style="font-size:0.85rem; color:var(--saffron-400); font-style:italic;"></div>
-          <div id="transContext" class="cultural-context-box" style="display:none;"></div>
+
+          <!-- Bottom Footer Disclaimer -->
+          <p class="text-center text-[11px] text-slate-500 mt-2">
+            पहाड़ी संगम AI • स्थानीय बोलियों की मिठास व प्रामाणिक जानकारी
+          </p>
         </div>
       </div>
-    </div>
 
-    <!-- Chat Input Bar -->
-    <div class="chat-input-bar" id="chatInputBar">
-      <div class="input-wrapper">
-        <button class="mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" title="आवाज़ से बोलें (Voice Input)">🎙️</button>
-        <textarea 
-          id="userInput" 
-          class="chat-textarea" 
-          rows="1" 
-          placeholder="यहाँ सन्देश लिखें या प्रश्न पूछें... (उदा: सेब की प्रूनिंग कब करें? / तुसीं किद्दां हो?)" 
-          onkeydown="handleKey(event)"
-          oninput="autoResize(this)"></textarea>
-      </div>
-      <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
-    </div>
-  </main>
+    </main>
+  </div>
 
   <!-- Glossary Modal -->
-  <div class="modal-overlay" id="glossaryModal" onclick="closeAllModals(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <h3 style="color:#fff;">📖 पहाड़ी-हिन्दी शब्दकोश व प्रामाणिक वाक्यांश</h3>
-        <button class="btn-secondary" style="padding:4px 10px;" onclick="closeModal('glossaryModal')">✕</button>
-      </div>
-      <div style="padding:10px 20px 0; display:flex; gap:8px;">
-        <input type="text" id="glossarySearch" class="key-input" placeholder="वाक्यांश या शब्द खोजें..." oninput="filterGlossary()" />
-      </div>
-      <div class="modal-body" id="glossaryBody">
-        <div style="color:var(--text-muted); text-align:center; padding:20px;">लोड हो रहा है...</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Heritage Lore Modal -->
-  <div class="modal-overlay" id="heritageModal" onclick="closeAllModals(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <h3 style="color:#fff;">🏛️ हिमालयी लोक धरोहर एवं कथाएं</h3>
-        <button class="btn-secondary" style="padding:4px 10px;" onclick="closeModal('heritageModal')">✕</button>
-      </div>
-      <div class="modal-body" id="heritageBody">
-        <div style="color:var(--text-muted); text-align:center; padding:20px;">लोड हो रहा है...</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Emergency Contacts Modal -->
-  <div class="modal-overlay" id="emergencyModal" onclick="closeAllModals(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <h3 style="color:#fff;">🚨 आपातकालीन व आपदा प्रबंधन हेल्पलाइन</h3>
-        <button class="btn-secondary" style="padding:4px 10px;" onclick="closeModal('emergencyModal')">✕</button>
-      </div>
-      <div class="modal-body" id="emergencyBody">
-        <div style="color:var(--text-muted); text-align:center; padding:20px;">लोड हो रहा है...</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- API Key Modal -->
-  <div class="modal-overlay" id="keyModal" onclick="closeAllModals(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <h3 style="color:#fff;">🔑 Google Gemini API Key</h3>
-        <button class="btn-secondary" style="padding:4px 10px;" onclick="closeModal('keyModal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <p style="font-size:0.85rem; color:var(--text-muted);">
-          Google AI Studio से प्राप्त मुफ़्त API Key दर्ज करें। Key आपके स्थानीय सिस्टम में सुरक्षित रूप से संरक्षित रहेगी।
-        </p>
-        <input type="password" id="apiKeyInput" class="key-input" placeholder="AIzaSy..." />
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-          <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--saffron-400); font-size:0.82rem; text-decoration:none;">
-            + मुफ़्त Key प्राप्त करें ↗
-          </a>
-          <button class="btn-primary-action" onclick="saveApiKey()">सुरक्षित करें (Save)</button>
+  <div id="glossaryModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-mist-900 border border-white/10 rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-pine-900/80 border border-pine-700 text-saffron-400 flex items-center justify-center">
+            <i data-lucide="book-marked" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">पहाड़ी - हिन्दी शब्दकोश (Glossary)</h3>
+            <p class="text-xs text-slate-400">दैनिक जीवन में प्रयुक्त होने वाले पारंपरिक पहाड़ी शब्द व वाक्यांश</p>
+          </div>
         </div>
-        <div id="keyFeedback" style="font-size:0.82rem; margin-top:6px;"></div>
+        <button id="closeGlossaryBtn" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Search in Glossary -->
+      <div class="p-4 border-b border-white/5 bg-slate-900/40">
+        <div class="relative">
+          <input
+            id="glossarySearchInput"
+            type="text"
+            placeholder="शब्द या वाक्यांश खोजें (उदा: तुसां, मिंजो, किजो, राजी-खुशी)..."
+            class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-4 py-2 pl-9 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-saffron-500"
+          >
+          <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+        </div>
+      </div>
+
+      <!-- Word Table / Grid -->
+      <div class="p-4 flex-1 overflow-y-auto space-y-2.5 text-xs sm:text-sm" id="glossaryList">
+        <!-- Rendered via JS -->
       </div>
     </div>
   </div>
 
-  <!-- Voice Cloning Modal -->
-  <div class="modal-overlay" id="voiceModal" onclick="closeAllModals(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <h3 style="color:#fff;">🎙️ निजी आवाज़ क्लोनिंग (Voice Clone)</h3>
-        <button class="btn-secondary" style="padding:4px 10px;" onclick="closeModal('voiceModal')">✕</button>
+  <!-- Emergency Helplines Modal -->
+  <div id="emergencyModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-mist-900 border border-white/10 rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-rose-950 border border-rose-800 text-rose-400 flex items-center justify-center">
+            <i data-lucide="phone-call" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">🚨 आपातकालीन व आपदा हेल्पलाइन</h3>
+            <p class="text-xs text-slate-400">हिमाचल प्रदेश व उत्तराखंड आपातकालीन नंबर</p>
+          </div>
+        </div>
+        <button id="closeEmergencyBtn" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
       </div>
-      <div class="modal-body">
-        <p style="font-size:0.85rem; color:var(--text-muted);">
-          3 से 5 सेकंड तक अपनी आवाज़ में कोई भी वाक्य बोलकर रिकॉर्ड करें। सिस्टम आपके पिच को कैलिब्रेट करके AI उत्तर आपके निजी स्वर में सुनाएगा।
-        </p>
-        <div class="audio-visualizer" id="audioVisualizer">
-          <div class="visualizer-bar" style="height:15px;"></div>
-          <div class="visualizer-bar" style="height:35px;"></div>
-          <div class="visualizer-bar" style="height:22px;"></div>
-          <div class="visualizer-bar" style="height:45px;"></div>
-          <div class="visualizer-bar" style="height:18px;"></div>
-        </div>
-        <div style="display:flex; gap:10px; justify-content:center; align-items:center;">
-          <button class="btn-primary-action" id="recordVoiceBtn" onclick="toggleVoiceRecord()">🔴 रिकॉर्ड शुरू करें</button>
-          <button class="btn-secondary" id="playSampleBtn" onclick="playVoiceSample()" style="display:none;">▶️ नमूना सुनें</button>
-        </div>
-        <div id="voiceStatusMsg" style="font-size:0.82rem; text-align:center; color:var(--text-muted); margin-top:6px;"></div>
+      <div class="p-4 flex-1 overflow-y-auto space-y-2.5 text-xs sm:text-sm" id="emergencyList">
+        <!-- Rendered via JS -->
       </div>
     </div>
+  </div>
+
+  <!-- Settings & API Key Modal -->
+  <div id="settingsModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-mist-900 border border-white/10 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-white/10">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="settings" class="w-4 h-4 text-saffron-400"></i>
+          <span>सिस्टम व API सेटिंग्स</span>
+        </h3>
+        <button id="closeSettingsBtn" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs sm:text-sm">
+        <!-- API Key Input -->
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">Google Gemini API Key</label>
+          <input
+            id="apiKeyInput"
+            type="password"
+            placeholder="AIzaSy..."
+            class="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-saffron-500"
+          >
+          <p class="text-[11px] text-slate-500 mt-1">
+            Google AI Studio से प्राप्त मुफ़्त Key दर्ज करें। Key आपके लोकल .env में सुरक्षित रहेगी।
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">आवाज की गति (TTS Speed)</label>
+          <select id="voiceSpeedSelect" class="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-slate-200">
+            <option value="0.85">धीमी व स्पष्ट (0.85x)</option>
+            <option value="1.0" selected>सामान्य (1.0x)</option>
+            <option value="1.2">तेज (1.2x)</option>
+          </select>
+        </div>
+
+        <div class="pt-2 flex items-center justify-between border-t border-white/5">
+          <span class="text-slate-300">रोमनाइज़्ड फ़ोनेटिक्स सदैव दिखाएं</span>
+          <input type="checkbox" id="alwaysPhoneticsCheckbox" checked class="w-4 h-4 rounded accent-saffron-500 cursor-pointer">
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <button id="saveSettingsBtn" class="w-full py-2.5 rounded-xl bg-saffron-500 hover:bg-saffron-600 text-mist-950 font-bold transition">
+          सेव करें (Save Preferences)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification element -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 border border-white/10 shadow-2xl rounded-2xl px-4 py-3 flex items-center gap-3 text-xs text-slate-100 pointer-events-none">
+    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toastMsg">क्लिपबोर्ड पर कॉपी किया गया!</span>
   </div>
 
   <script>
-    let activeDialect = 'hindi';
-    let activeDialectName = 'मानक हिन्दी';
-    let showPhonetics = false;
+    // Dialect Knowledge Base & Metadata
+    const DIALECT_META = {
+      hindi: {
+        name: 'मानक हिन्दी',
+        desc: 'पारंपरिक व आधुनिक शिष्टाचार युक्त शुद्ध हिन्दी वार्तालाप।',
+        greeting: 'नमस्ते! मैं आपकी किस प्रकार सहायता कर सकता हूँ?'
+      },
+      kangri: {
+        name: 'कांगड़ी (Kangri)',
+        desc: 'कांगड़ा, हमीरपुर व ऊना क्षेत्र में बोली जाने वाली प्रमुख पश्चिमी पहाड़ी उपबोली। "मिंजो", "तिंजो", "कुथी" आदि।',
+        greeting: 'नमस्कार! कुथू चले न तुसां? दसो क्या मदद करां?'
+      },
+      mandeali: {
+        name: 'मण्डयाली (Mandeali)',
+        desc: 'मण्डी, द्रंग, जोगिन्दरनगर व बल्ह क्षेत्र की मधुर पहाड़ी बोली। "किजो", "काहा", "तुसां" जैसे शब्द प्रयोग।',
+        greeting: 'नमस्ते जी! तुसां केड़े हाल चाला न? आज क्या गल्ल करणी?'
+      },
+      kullui: {
+        name: 'कुलवी (Kullui)',
+        desc: 'देवभूमि कुल्लू घाटी व ब्यास तटवर्ती क्षेत्रों की बोली। "जय देव", "हौ", "तुसी", "कबे"।',
+        greeting: 'जय देव जी! सब राजी-खुशी? कुल्लू रा कोई समाचार पूछणा?'
+      },
+      shimla_pahari: {
+        name: 'महासूवी / शिमला (Mahasuvi)',
+        desc: 'शिमला, ठियोग, कोटखाई, रोहड़ू, सोलन क्षेत्र की पहाड़ी। "आपु", "के हाल च", "स्युब"।',
+        greeting: 'नमस्कार जी! आपु किद्दां आ? सब राजी-खुशी आ?'
+      },
+      chambeali: {
+        name: 'चम्बियाली (Chambeali)',
+        desc: 'रावी घाटी चंबा व मणिमहेश अंचल की मधुर बोली। "तुहाड़े के हाल न"।',
+        greeting: 'नमस्ते जी! तुहाड़े के हाल न? चम्बे री कोई गल्ल पूछणी?'
+      },
+      sirmauri: {
+        name: 'सिरमौरी (Sirmauri)',
+        desc: 'नाहन, रेणुका जी, गिरि-पार (हाटी क्षेत्र) की प्राचीन बोली।',
+        greeting: 'पैलाग / नमस्कार जी! के हाल-चाल बा?'
+      },
+      garhwali: {
+        name: 'गढ़वाली (Garhwali)',
+        desc: 'अलकनंदा व भागीरथी घाटी (श्रीनगर, पौड़ी, टिहरी, चमोली) की पावन बोली।',
+        greeting: 'पैलाग जी! कन छौ तुम? सब भल च?'
+      },
+      kumaoni: {
+        name: 'कुमाऊँनी (Kumaoni)',
+        desc: 'कत्यूर व मानसखंड (अल्मोड़ा, नैनीताल, पिथौरागढ़) की मिठास। "दगड़्या", "भल छौ"।',
+        greeting: 'पैलाग दगड़्या! कसि छा? सब भल छौ?'
+      },
+      dogri: {
+        name: 'डोगरी (Dogri)',
+        desc: 'जम्मू व शिवालिक क्षेत्र की संविधान सम्मत मधुर डोगरी।',
+        greeting: 'नमस्ते जी! तुंदा के हाल ऐ? सब ठीक-ठाक?'
+      },
+      jaunsari: {
+        name: 'जौनसारी (Jaunsari)',
+        desc: 'जौनसार-बावर, चकराता पहाड़ियों की लोक संस्कृति से युक्त बोली।',
+        greeting: 'महासू देवता री कृपा! नमस्कार जी, क्या हाल-चाल?'
+      }
+    };
+
+    // Default Fallback Vocabulary
+    let GLOSSARY_ITEMS = [
+      { word: 'तुसां / तुसी', dialect: 'कांगड़ी / मण्डयाली', hindi: 'आप (You)', phonetic: 'Tusan / Tusi' },
+      { word: 'मिंजो / महां', dialect: 'कांगड़ी / मण्डयाली', hindi: 'मुझे / मुझको (To me)', phonetic: 'Minjo / Mahaan' },
+      { word: 'तिंजो', dialect: 'कांगड़ी', hindi: 'तुझे / उसको (To you/him)', phonetic: 'Tinjo' },
+      { word: 'किजो', dialect: 'मण्डयाली', hindi: 'क्यों (Why)', phonetic: 'Kijo' },
+      { word: 'कुथी / कुथू', dialect: 'कांगड़ी / मण्डयाली', hindi: 'कहाँ (Where)', phonetic: 'Kuthi / Kuthu' },
+      { word: 'केड़े हाल चाला / किद्दां', dialect: 'मण्डयाली / शिमला', hindi: 'क्या हाल-चाल हैं (How are you)', phonetic: 'Kede haal chaala / Kiddan' },
+      { word: 'बाशठ / बाठ', dialect: 'महासूवी', hindi: 'बातचीत / किस्सा (Conversation)', phonetic: 'Basht / Baath' },
+      { word: 'सिड्डू (Siddu)', dialect: 'कुल्लू / शिमला', hindi: 'पारंपरिक खमीरयुक्त स्टीम्ड व्यंजन', phonetic: 'Siddu (Himachali dish)' },
+      { word: 'पैलाग', dialect: 'गढ़वाली / कुमाऊँनी', hindi: 'चरण स्पर्श / आदरणीय प्रणाम', phonetic: 'Pailaag' },
+      { word: 'दगड़्या', dialect: 'कुमाऊँनी', hindi: 'सच्चा मित्र / सहयात्री (Dear Friend)', phonetic: 'Dagadya' }
+    ];
+
+    let EMERGENCY_CONTACTS = [
+      { title: 'राष्ट्रीय आपातकालीन सेवा (National Emergency)', number: '112', desc: 'पुलिस, अग्निशमन व एम्बुलेंस (All-in-one)' },
+      { title: 'हिमाचल आपदा प्रबंधन (HP Disaster Helpline)', number: '1077', desc: 'भूस्खलन, बाढ़ व प्राकृतिक आपदा सहायता' },
+      { title: 'एम्बुलेंस स्वास्थ्य सेवा (Medical Ambulance)', number: '108', desc: '24x7 मुफ्त आपातकालीन चिकित्सा' },
+      { title: 'महिला हेल्पलाइन (Women Emergency)', number: '1091', desc: '24 घंटे महिला सुरक्षा' },
+      { title: 'एचआरटीसी बस पूछताछ (HRTC Control Room)', number: '01772803017', desc: 'समय-सारिणी व सड़क स्थिति' }
+    ];
+
+    // State Variables
+    let currentDialect = 'hindi';
+    let isPhoneticsActive = true;
     let personaMode = 'standard';
     let chatHistory = [];
     let isOnline = false;
-    let phrasesData = [];
-    let storiesData = [];
-    let emergencyData = [];
-    let recognition = null;
-    let isRecognizing = false;
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let isRecordingVoice = false;
 
-    // Initialize on page load
-    async function init() {
-      await checkStatus();
-      await loadPhrases();
-      await loadStories();
-      await loadEmergency();
-      setupSpeechRecognition();
+    // DOM Elements
+    const chatContainer = document.getElementById('chatContainer');
+    const messagesList = document.getElementById('messagesList');
+    const welcomeHero = document.getElementById('welcomeHero');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const dialectSelect = document.getElementById('dialectSelect');
+    const activeDialectTitle = document.getElementById('activeDialectTitle');
+    const activeDialectDesc = document.getElementById('activeDialectDesc');
+    const targetDialectNameDisplay = document.getElementById('targetDialectNameDisplay');
+    const togglePhoneticsBtn = document.getElementById('togglePhoneticsBtn');
+    const personaModeSelect = document.getElementById('personaModeSelect');
+    const micBtn = document.getElementById('micBtn');
+    const clearChatBtn = document.getElementById('clearChatBtn');
+    const newChatBtn = document.getElementById('newChatBtn');
+
+    // Sidebar
+    const chatSidebar = document.getElementById('chatSidebar');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+
+    // Modals
+    const glossaryModal = document.getElementById('glossaryModal');
+    const openGlossaryBtn = document.getElementById('openGlossaryBtn');
+    const closeGlossaryBtn = document.getElementById('closeGlossaryBtn');
+    const glossaryList = document.getElementById('glossaryList');
+    const glossarySearchInput = document.getElementById('glossarySearchInput');
+
+    const emergencyModal = document.getElementById('emergencyModal');
+    const openEmergencyBtn = document.getElementById('openEmergencyBtn');
+    const closeEmergencyBtn = document.getElementById('closeEmergencyBtn');
+    const emergencyList = document.getElementById('emergencyList');
+
+    const settingsModal = document.getElementById('settingsModal');
+    const openSettingsBtn = document.getElementById('openSettingsBtn');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+
+    // Toast
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+
+    function showToast(message) {
+      toastMsg.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2500);
     }
 
-    async function checkStatus() {
+    async function checkBackendStatus() {
       try {
         const res = await fetch('/api/status');
         const data = await res.json();
         isOnline = data.hasKey;
-        const pill = document.getElementById('statusPill');
-        const text = document.getElementById('statusText');
+        const text = document.getElementById('headerStatusText');
+        const dot = document.getElementById('headerStatusDot');
         if (isOnline) {
-          pill.className = 'status-pill';
-          text.textContent = 'ऑनलाइन (Gemini AI)';
+          text.textContent = 'ऑनलाइन • Gemini AI';
+          dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping';
         } else {
-          pill.className = 'status-pill offline';
-          text.textContent = 'ऑफ़लाइन मोड (ऑफलाइन शब्दकोश)';
+          text.textContent = 'ऑफ़लाइन शब्दकोश • 8080';
+          dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400';
         }
-      } catch (e) {
-        console.warn('Status fetch failed', e);
+      } catch (err) {
+        console.warn('Status check failed:', err);
       }
     }
 
-    function setDialect(id, name, desc, btnEl) {
-      activeDialect = id;
-      activeDialectName = name;
-      document.querySelectorAll('.dialect-btn').forEach(btn => btn.classList.remove('active'));
-      if (btnEl) btnEl.classList.add('active');
-      document.getElementById('currentDialectTitle').innerHTML = `${name} <span>•</span> <small style="font-size:0.8rem; color:var(--saffron-400);">सक्रिय</small>`;
-      document.getElementById('currentDialectSub').textContent = desc;
-
-      if (window.innerWidth <= 768) {
-        document.getElementById('sidebar').classList.remove('open');
+    async function loadPhrasesFromBackend() {
+      try {
+        const res = await fetch('/api/phrases');
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          GLOSSARY_ITEMS = data.map(p => ({
+            word: `${p.hindi} ➔ ${p.translation}`,
+            dialect: p.dialect || 'पहाड़ी',
+            hindi: p.culturalNote || p.english,
+            phonetic: p.phonetic || ''
+          }));
+        }
+      } catch (err) {
+        console.warn('Phrases load failed, using default glossary:', err);
       }
     }
 
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('open');
+    async function loadEmergencyFromBackend() {
+      try {
+        const res = await fetch('/api/emergency');
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          EMERGENCY_CONTACTS = data.map(e => ({
+            title: e.titleHindi || e.titleEnglish,
+            number: e.number,
+            desc: e.description
+          }));
+        }
+      } catch (err) {
+        console.warn('Emergency load failed, using defaults:', err);
+      }
     }
 
-    function changePersonaMode(val) {
-      personaMode = val;
-      const labels = {
-        standard: 'मोड: सर्व-सहायक',
-        elder: 'मोड: बुजुर्ग मित्र (आदरणीय व संक्षिप्त संवाद)',
-        student: 'मोड: छात्र सहायक (द्विभाषी नोट्स व स्पष्टीकरण)',
-        farmer: 'मोड: किसान व बागवान मित्र (सेब व कृषि सलाह)'
-      };
-      document.getElementById('activePersonaBadge').textContent = labels[val] || 'मोड: सर्व-सहायक';
+    function updateDialectDisplay(dialectKey) {
+      currentDialect = dialectKey;
+      const info = DIALECT_META[dialectKey] || DIALECT_META.hindi;
+      activeDialectTitle.textContent = info.name;
+      activeDialectDesc.textContent = info.desc;
+      targetDialectNameDisplay.textContent = info.name;
+      dialectSelect.value = dialectKey;
     }
 
-    function togglePronunciation() {
-      showPhonetics = !showPhonetics;
-      const btn = document.getElementById('phoneticsToggleBtn');
-      if (btn) btn.classList.toggle('active-toggle', showPhonetics);
-      document.querySelectorAll('.pronunciation').forEach(el => {
-        el.style.display = showPhonetics ? 'block' : 'none';
+    // Render Glossary items
+    function renderGlossary(filterText = '') {
+      glossaryList.innerHTML = '';
+      const filtered = GLOSSARY_ITEMS.filter(item => 
+        (item.word && item.word.toLowerCase().includes(filterText.toLowerCase())) ||
+        (item.hindi && item.hindi.toLowerCase().includes(filterText.toLowerCase())) ||
+        (item.dialect && item.dialect.toLowerCase().includes(filterText.toLowerCase())) ||
+        (item.phonetic && item.phonetic.toLowerCase().includes(filterText.toLowerCase()))
+      );
+
+      if (filtered.length === 0) {
+        glossaryList.innerHTML = `
+          <div class="text-center py-8 text-slate-500">
+            कोई शब्द नहीं मिला। अन्य शब्द खोजें।
+          </div>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'p-3 rounded-2xl bg-slate-950/60 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:border-saffron-500/30 transition';
+        row.innerHTML = `
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-saffron-400 text-sm">${item.word}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 border border-white/5">${item.dialect}</span>
+            </div>
+            <div class="text-xs text-slate-300 mt-0.5">${item.hindi}</div>
+          </div>
+          <div class="text-left sm:text-right">
+            <span class="text-[11px] font-mono text-slate-400 italic">${item.phonetic}</span>
+          </div>
+        `;
+        glossaryList.appendChild(row);
       });
     }
 
-    function switchView(viewName) {
-      const chatContainer = document.getElementById('chatMessages');
-      const chatInput = document.getElementById('chatInputBar');
-      const transView = document.getElementById('translatorView');
-      const tabChat = document.getElementById('tabChat');
-      const tabTrans = document.getElementById('tabTrans');
-
-      if (viewName === 'translator') {
-        chatContainer.style.display = 'none';
-        chatInput.style.display = 'none';
-        transView.classList.add('active');
-        tabTrans.classList.add('active');
-        tabChat.classList.remove('active');
-      } else {
-        chatContainer.style.display = 'flex';
-        chatInput.style.display = 'flex';
-        transView.classList.remove('active');
-        tabChat.classList.add('active');
-        tabTrans.classList.remove('active');
-      }
-    }
-
-    function autoResize(textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-    }
-
-    function handleKey(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    }
-
-    function clearChat() {
-      const container = document.getElementById('chatMessages');
-      container.innerHTML = `
-        <div class="message bot">
-          <div class="bubble">
-            संवाद साफ़ कर दिया गया है। आप नया प्रश्न पूछ सकते हैं!
+    // Render Emergency Contacts
+    function renderEmergency() {
+      emergencyList.innerHTML = '';
+      EMERGENCY_CONTACTS.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'p-3.5 rounded-2xl bg-slate-950/60 border border-white/5 flex items-center justify-between gap-3';
+        row.innerHTML = `
+          <div>
+            <h4 class="font-bold text-white text-sm">${item.title}</h4>
+            <p class="text-xs text-slate-400 mt-0.5">${item.desc}</p>
           </div>
-        </div>
-      `;
-      chatHistory = [];
+          <a href="tel:${item.number}" class="px-3.5 py-1.5 rounded-xl bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-300 font-bold text-xs flex items-center gap-1.5 transition">
+            <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+            <span>${item.number}</span>
+          </a>
+        `;
+        emergencyList.appendChild(row);
+      });
+      lucide.createIcons();
     }
 
-    function copyText(btn) {
-      const bubble = btn.closest('.message').querySelector('.bubble');
-      // Extract only clean text without pronunciation snippet
-      let text = '';
-      for (let node of bubble.childNodes) {
-        if (node.nodeType === Node.TEXT_NODE) text += node.textContent;
+    // Auto resize textarea
+    messageInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+    });
+
+    function appendMessage(role, text, phonetic = null, dialect = currentDialect) {
+      if (welcomeHero) welcomeHero.style.display = 'none';
+
+      const msgObj = { 
+        id: Date.now(), 
+        role, 
+        text, 
+        phonetic, 
+        dialect, 
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+      };
+      chatHistory.push(msgObj);
+
+      const msgEl = document.createElement('div');
+      msgEl.className = `flex items-start gap-3 ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+
+      if (role === 'assistant') {
+        msgEl.innerHTML = `
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-pine-700 to-pine-900 border border-pine-600/50 flex items-center justify-center text-saffron-400 shrink-0 shadow-sm mt-0.5">
+            <i data-lucide="mountain-snow" class="w-4 h-4"></i>
+          </div>
+          <div class="max-w-[85%] sm:max-w-[78%] space-y-1.5">
+            <div class="flex items-center gap-2 text-[11px] text-slate-400 px-1">
+              <span class="font-semibold text-saffron-400">${DIALECT_META[dialect]?.name || 'सहायक'}</span>
+              <span>•</span>
+              <span>${msgObj.timestamp}</span>
+            </div>
+            <div class="p-4 rounded-3xl rounded-tl-sm glass-card border border-white/10 text-slate-100 text-sm leading-relaxed shadow-lg">
+              <div class="whitespace-pre-line">${escapeHtml(text)}</div>
+              ${phonetic && isPhoneticsActive ? `
+                <div class="mt-2.5 pt-2 border-t border-white/10 text-xs font-mono text-slate-400 italic flex items-center gap-1.5">
+                  <i data-lucide="volume-2" class="w-3.5 h-3.5 text-saffron-400 shrink-0"></i>
+                  <span>${escapeHtml(phonetic)}</span>
+                </div>
+              ` : ''}
+            </div>
+            <!-- Message Action Toolbar -->
+            <div class="flex items-center gap-1 text-slate-400 text-xs px-1">
+              <button class="tts-play-btn p-1.5 rounded-lg hover:bg-slate-800 hover:text-saffron-400 transition" title="उच्चारण सुनें (Listen Voice)">
+                <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+              </button>
+              <button class="copy-msg-btn p-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition" title="संदेश कॉपी करें">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              </button>
+              <button class="feedback-up p-1.5 rounded-lg hover:bg-slate-800 hover:text-emerald-400 transition" title="उत्कृष्ट उत्तर">
+                <i data-lucide="thumbs-up" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        `;
+
+        // Attach action handlers
+        const copyBtn = msgEl.querySelector('.copy-msg-btn');
+        copyBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(text);
+          showToast('संदेश क्लिपबोर्ड पर कॉपी हो गया!');
+        });
+
+        const ttsBtn = msgEl.querySelector('.tts-play-btn');
+        ttsBtn.addEventListener('click', () => {
+          speakText(text);
+        });
+
+        const fbUp = msgEl.querySelector('.feedback-up');
+        fbUp.addEventListener('click', () => {
+          fbUp.classList.toggle('text-emerald-400');
+          showToast('धन्यवाद! आपकी प्रतिक्रिया दर्ज कर ली गई है।');
+        });
+
+      } else {
+        // User Message
+        msgEl.innerHTML = `
+          <div class="max-w-[85%] sm:max-w-[78%] space-y-1">
+            <div class="flex items-center justify-end gap-2 text-[11px] text-slate-400 px-1">
+              <span>आप</span>
+              <span>•</span>
+              <span>${msgObj.timestamp}</span>
+            </div>
+            <div class="p-4 rounded-3xl rounded-tr-sm bg-gradient-to-r from-pine-800 to-pine-900 border border-pine-700/60 text-white text-sm leading-relaxed shadow-lg">
+              <div class="whitespace-pre-line">${escapeHtml(text)}</div>
+            </div>
+          </div>
+          <div class="w-8 h-8 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center text-slate-300 shrink-0 mt-0.5">
+            <i data-lucide="user" class="w-4 h-4"></i>
+          </div>
+        `;
       }
-      text = text.trim() || bubble.innerText.trim();
-      navigator.clipboard.writeText(text);
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '✓ कॉपीड';
-      setTimeout(() => btn.innerHTML = originalText, 1500);
+
+      messagesList.appendChild(msgEl);
+      lucide.createIcons();
+      chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
     }
 
-    async function speakText(btn) {
-      const bubble = btn.closest('.message').querySelector('.bubble');
-      let text = '';
-      for (let node of bubble.childNodes) {
-        if (node.nodeType === Node.TEXT_NODE) text += node.textContent;
-      }
-      text = text.trim() || bubble.innerText.trim();
+    // Text To Speech: Try Gemini Neural TTS, then Browser Web Speech
+    async function speakText(text) {
       if (!text) return;
+      showToast('ऑडियो तैयार हो रहा है...');
 
-      btn.style.color = 'var(--saffron-400)';
-      
-      // Try Neural TTS from backend
       try {
         const res = await fetch('/api/voice/synthesize', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text })
         });
         const data = await res.json();
         if (data.success && data.audioUrl) {
           const audio = new Audio(data.audioUrl);
           audio.play();
-          audio.onended = () => btn.style.color = '';
           return;
         }
       } catch (err) {
-        console.warn('Backend TTS failed, using browser speech:', err);
+        console.warn('Backend neural TTS fallback:', err);
       }
 
-      // Browser Web Speech API Fallback
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'hi-IN';
-        utterance.rate = 0.95;
-        utterance.pitch = 1.0;
-        utterance.onend = () => btn.style.color = '';
+        const speed = parseFloat(document.getElementById('voiceSpeedSelect')?.value) || 1.0;
+        utterance.rate = speed;
         window.speechSynthesis.speak(utterance);
       } else {
-        btn.style.color = '';
+        showToast('आपके ब्राउज़र में स्पीच सिंथेसिस समर्थित नहीं है।');
       }
     }
 
-    // Speech-to-text Web Speech API
-    function setupSpeechRecognition() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'hi-IN';
-
-        recognition.onstart = () => {
-          isRecognizing = true;
-          document.getElementById('micBtn').classList.add('recording');
-        };
-        recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript;
-          const input = document.getElementById('userInput');
-          input.value = transcript;
-          autoResize(input);
-        };
-        recognition.onerror = () => {
-          isRecognizing = false;
-          document.getElementById('micBtn').classList.remove('recording');
-        };
-        recognition.onend = () => {
-          isRecognizing = false;
-          document.getElementById('micBtn').classList.remove('recording');
-        };
-      }
-    }
-
-    function toggleSpeechRecognition() {
-      if (!recognition) {
-        alert('आपके ब्राउज़र में आवाज़ पहचान (Web Speech API) उपलब्ध नहीं है। कृपया Chrome या Edge का उपयोग करें।');
-        return;
-      }
-      if (isRecognizing) {
-        recognition.stop();
-      } else {
-        recognition.start();
-      }
-    }
-
-    // Send chat message to backend
-    async function sendMessage() {
-      const input = document.getElementById('userInput');
-      const text = input.value.trim();
-      if (!text) return;
-
-      const container = document.getElementById('chatMessages');
-
-      // Append User message
-      const userMsg = document.createElement('div');
-      userMsg.className = 'message user';
-      userMsg.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
-      container.appendChild(userMsg);
-
-      input.value = '';
-      input.style.height = 'auto';
-      container.scrollTop = container.scrollHeight;
-
-      // Append typing indicator
-      const typingMsg = document.createElement('div');
-      typingMsg.className = 'message bot';
-      typingMsg.id = 'typingIndicator';
-      typingMsg.innerHTML = `
-        <div class="bubble">
-          <div class="typing-indicator">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-          </div>
-        </div>
-      `;
-      container.appendChild(typingMsg);
-      container.scrollTop = container.scrollHeight;
-
-      chatHistory.push({ role: 'user', isUser: true, text });
+    // Call Real Gemini Backend Chat API
+    async function sendPromptToBackend(prompt) {
+      typingIndicator.classList.remove('hidden');
+      chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
 
       try {
-        const response = await fetch('/api/chat', {
+        const res = await fetch('/api/chat', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            message: text,
-            dialect: activeDialect,
+            message: prompt,
+            dialect: currentDialect,
             mode: personaMode,
-            history: chatHistory
+            history: chatHistory.map(m => ({ role: m.role, isUser: m.role === 'user', text: m.text }))
           })
         });
 
-        const data = await response.json();
-        const replyText = data.reply || "उत्तर प्राप्त नहीं हो सका। कृपया पुनः प्रयास करें।";
-        chatHistory.push({ role: 'assistant', isUser: false, text: replyText });
-
-        // Remove typing indicator
-        const typingEl = document.getElementById('typingIndicator');
-        if (typingEl) typingEl.remove();
-
-        // Bot message bubble
-        const botMsg = document.createElement('div');
-        botMsg.className = 'message bot';
-        botMsg.innerHTML = `
-          <div class="bubble">
-            ${escapeHtml(replyText)}
-            <div class="pronunciation" style="display:${showPhonetics ? 'block' : 'none'};">
-              Phonetic guidance active
-            </div>
-          </div>
-          <div class="message-meta">
-            <span>AI सहायक (${activeDialectName})</span>
-            <button class="action-icon-btn" onclick="speakText(this)">🔊 बोलें</button>
-            <button class="action-icon-btn" onclick="copyText(this)">📋 कॉपी</button>
-          </div>
-        `;
-        container.appendChild(botMsg);
-        container.scrollTop = container.scrollHeight;
-
+        const data = await res.json();
+        typingIndicator.classList.add('hidden');
+        const replyText = data.reply || "उत्तर प्राप्त नहीं हो सका।";
+        appendMessage('assistant', replyText, null, currentDialect);
       } catch (err) {
         console.error('Chat error:', err);
-        const typingEl = document.getElementById('typingIndicator');
-        if (typingEl) typingEl.remove();
-
-        const errorMsg = document.createElement('div');
-        errorMsg.className = 'message bot';
-        errorMsg.innerHTML = `
-          <div class="bubble" style="border-color:#ef4444;">
-            सर्वर से संपर्क करने में समस्या हुई। ऑफ़लाइन शब्दकोश उपलब्ध है।
-          </div>
-        `;
-        container.appendChild(errorMsg);
-        container.scrollTop = container.scrollHeight;
+        typingIndicator.classList.add('hidden');
+        appendMessage('assistant', 'सर्वर से संपर्क करने में समस्या हुई। ऑफ़लाइन शब्दकोश व अनुवादक का उपयोग करें।', null, currentDialect);
       }
     }
 
-    // Direct Bidirectional Translation
-    async function handleDirectTranslate() {
-      const input = document.getElementById('transInput').value.trim();
-      const isReverse = document.getElementById('reverseTranslateCheck').checked;
-      const outBox = document.getElementById('transOutput');
-      const phonBox = document.getElementById('transPhonetic');
-      const ctxBox = document.getElementById('transContext');
+    function handleSend() {
+      const text = messageInput.value.trim();
+      if (!text) return;
 
-      if (!input) {
-        outBox.textContent = 'कृपया अनुवाद के लिए कुछ टेक्स्ट लिखें।';
+      appendMessage('user', text);
+      messageInput.value = '';
+      messageInput.style.height = 'auto';
+
+      sendPromptToBackend(text);
+    }
+
+    function triggerQuickPrompt(prompt) {
+      if (window.innerWidth < 1024) {
+        chatSidebar.classList.add('-translate-x-full');
+      }
+      appendMessage('user', prompt);
+      sendPromptToBackend(prompt);
+    }
+
+    sendBtn.addEventListener('click', handleSend);
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+
+    // Quick Prompts Click
+    document.querySelectorAll('.quick-prompt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const prompt = btn.getAttribute('data-prompt');
+        appendMessage('user', prompt);
+        sendPromptToBackend(prompt);
+      });
+    });
+
+    // Dialect Selector Change
+    dialectSelect.addEventListener('change', (e) => {
+      updateDialectDisplay(e.target.value);
+      showToast(`बोली बदलकर '${DIALECT_META[e.target.value]?.name || e.target.value}' कर दी गई`);
+    });
+
+    // Persona Mode Switcher
+    personaModeSelect.addEventListener('change', (e) => {
+      personaMode = e.target.value;
+      showToast(`विधा बदलकर '${personaModeSelect.options[personaModeSelect.selectedIndex].text}' कर दी गई`);
+    });
+
+    // Phonetics Toggle
+    togglePhoneticsBtn.addEventListener('click', () => {
+      isPhoneticsActive = !isPhoneticsActive;
+      togglePhoneticsBtn.classList.toggle('text-saffron-400', isPhoneticsActive);
+      showToast(isPhoneticsActive ? 'उच्चारण सहायक सक्रिय किया गया' : 'उच्चारण सहायक निष्क्रिय');
+    });
+
+    // Mic Speech-To-Text Toggle
+    micBtn.addEventListener('click', () => {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        showToast('स्पीच रिकॉग्निशन आपके ब्राउज़र पर सीधे उपलब्ध नहीं है।');
         return;
       }
-
-      outBox.textContent = 'अनुवाद हो रहा है...';
-      phonBox.textContent = '';
-      ctxBox.style.display = 'none';
-
+      showToast('माइक सक्रिय: बोलिए...');
       try {
-        const res = await fetch('/api/translate', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            query: input,
-            dialect: activeDialect,
-            isReverse: isReverse
-          })
-        });
-        const data = await res.json();
-        outBox.textContent = data.translatedText || input;
-        if (data.phoneticText) {
-          phonBox.textContent = `उच्चारण (Phonetics): ${data.phoneticText}`;
-        }
-        if (data.culturalContext) {
-          ctxBox.textContent = `💡 सांस्कृतिक संदर्भ: ${data.culturalContext}`;
-          ctxBox.style.display = 'block';
-        }
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRec();
+        recognition.lang = 'hi-IN';
+        recognition.start();
+        micBtn.classList.add('text-rose-400');
+        recognition.onresult = (event) => {
+          const speechResult = event.results[0][0].transcript;
+          messageInput.value = speechResult;
+          messageInput.style.height = 'auto';
+          micBtn.classList.remove('text-rose-400');
+        };
+        recognition.onerror = () => {
+          micBtn.classList.remove('text-rose-400');
+        };
+        recognition.onend = () => {
+          micBtn.classList.remove('text-rose-400');
+        };
       } catch (err) {
-        outBox.textContent = 'अनुवाद में त्रुटि हुई।';
+        console.error(err);
+        micBtn.classList.remove('text-rose-400');
       }
-    }
+    });
 
-    function toggleTranslateDirection() {
-      const isReverse = document.getElementById('reverseTranslateCheck').checked;
-      document.getElementById('transSourceLabel').textContent = isReverse ? `स्रोत पाठ (${activeDialectName}):` : 'स्रोत पाठ (हिंदी):';
-      document.getElementById('transTargetLabel').textContent = isReverse ? 'अनुवाद परिणाम (हिंदी):' : `अनुवाद परिणाम (${activeDialectName}):`;
+    // Clear and New Chat
+    function resetChat() {
+      messagesList.innerHTML = '';
+      chatHistory = [];
+      if (welcomeHero) welcomeHero.style.display = 'block';
+      showToast('संवाद सूची साफ कर दी गई है।');
     }
-
-    // Modal Handlers
-    function openGlossaryModal() {
-      renderGlossary(phrasesData);
-      document.getElementById('glossaryModal').style.display = 'flex';
-    }
-
-    function openHeritageModal() {
-      renderHeritage(storiesData);
-      document.getElementById('heritageModal').style.display = 'flex';
-    }
-
-    function openEmergencyModal() {
-      renderEmergency(emergencyData);
-      document.getElementById('emergencyModal').style.display = 'flex';
-    }
-
-    function openKeyModal() {
-      document.getElementById('keyModal').style.display = 'flex';
-    }
-
-    function openVoiceModal() {
-      document.getElementById('voiceModal').style.display = 'flex';
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).style.display = 'none';
-    }
-
-    function closeAllModals(e) {
-      if (e.target.classList.contains('modal-overlay')) {
-        e.target.style.display = 'none';
+    clearChatBtn.addEventListener('click', resetChat);
+    newChatBtn.addEventListener('click', () => {
+      resetChat();
+      if (window.innerWidth < 1024) {
+        chatSidebar.classList.add('-translate-x-full');
       }
-    }
+    });
 
-    async function loadPhrases() {
-      try {
-        const res = await fetch('/api/phrases');
-        phrasesData = await res.json();
-      } catch (e) {
-        console.warn('Phrases load failed', e);
-      }
-    }
+    // Sidebar Mobile Toggles
+    sidebarToggleBtn.addEventListener('click', () => {
+      chatSidebar.classList.remove('-translate-x-full');
+    });
+    closeSidebarBtn.addEventListener('click', () => {
+      chatSidebar.classList.add('-translate-x-full');
+    });
 
-    async function loadStories() {
-      try {
-        const res = await fetch('/api/stories');
-        storiesData = await res.json();
-      } catch (e) {
-        console.warn('Stories load failed', e);
-      }
-    }
+    // Modals Handling
+    openGlossaryBtn.addEventListener('click', () => {
+      glossaryModal.classList.remove('hidden');
+      glossaryModal.classList.add('flex');
+      renderGlossary();
+    });
+    closeGlossaryBtn.addEventListener('click', () => {
+      glossaryModal.classList.add('hidden');
+      glossaryModal.classList.remove('flex');
+    });
 
-    async function loadEmergency() {
-      try {
-        const res = await fetch('/api/emergency');
-        emergencyData = await res.json();
-      } catch (e) {
-        console.warn('Emergency load failed', e);
-      }
-    }
+    openEmergencyBtn.addEventListener('click', () => {
+      emergencyModal.classList.remove('hidden');
+      emergencyModal.classList.add('flex');
+      renderEmergency();
+    });
+    closeEmergencyBtn.addEventListener('click', () => {
+      emergencyModal.classList.add('hidden');
+      emergencyModal.classList.remove('flex');
+    });
 
-    function renderGlossary(list) {
-      const body = document.getElementById('glossaryBody');
-      if (!list || list.length === 0) {
-        body.innerHTML = '<div style="text-align:center; color:var(--text-muted);">कोई वाक्यांश नहीं मिला।</div>';
-        return;
-      }
-      body.innerHTML = list.map(item => `
-        <div class="dict-entry">
-          <div class="dict-word">
-            <span>${escapeHtml(item.hindi)} ➔ ${escapeHtml(item.translation)}</span>
-            <span style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(item.dialect || '')}</span>
-          </div>
-          <div class="dict-meaning">🗣️ <em>${escapeHtml(item.phonetic || '')}</em> | 🇬🇧 ${escapeHtml(item.english || '')}</div>
-          ${item.culturalNote ? `<div class="dict-note">💡 ${escapeHtml(item.culturalNote)}</div>` : ''}
-        </div>
-      `).join('');
-    }
+    glossarySearchInput.addEventListener('input', (e) => {
+      renderGlossary(e.target.value);
+    });
 
-    function filterGlossary() {
-      const q = document.getElementById('glossarySearch').value.toLowerCase().trim();
-      const filtered = phrasesData.filter(p => 
-        (p.hindi && p.hindi.toLowerCase().includes(q)) ||
-        (p.translation && p.translation.toLowerCase().includes(q)) ||
-        (p.phonetic && p.phonetic.toLowerCase().includes(q)) ||
-        (p.english && p.english.toLowerCase().includes(q))
-      );
-      renderGlossary(filtered);
-    }
+    openSettingsBtn.addEventListener('click', () => {
+      settingsModal.classList.remove('hidden');
+      settingsModal.classList.add('flex');
+    });
+    closeSettingsBtn.addEventListener('click', () => {
+      settingsModal.classList.add('hidden');
+      settingsModal.classList.remove('flex');
+    });
 
-    function renderHeritage(stories) {
-      const body = document.getElementById('heritageBody');
-      if (!stories || stories.length === 0) {
-        body.innerHTML = '<div style="text-align:center; color:var(--text-muted);">कहानियां लोड नहीं हो सकीं।</div>';
-        return;
-      }
-      body.innerHTML = stories.map(s => `
-        <div class="dict-entry">
-          <div class="dict-word" style="color:var(--saffron-400); font-size:1rem;">
-            ${escapeHtml(s.titleHindi)}
-          </div>
-          <div style="font-size:0.8rem; color:var(--saffron-500); margin:2px 0;">📍 ${escapeHtml(s.region || '')}</div>
-          <p style="font-size:0.88rem; line-height:1.5; color:#e2e8f0; margin-top:6px;">${escapeHtml(s.fullStory || s.summary || '')}</p>
-          ${s.culturalSignificance ? `<div class="dict-note" style="margin-top:6px;">🌟 <strong>सांस्कृतिक महत्व:</strong> ${escapeHtml(s.culturalSignificance)}</div>` : ''}
-        </div>
-      `).join('');
-    }
-
-    function renderEmergency(contacts) {
-      const body = document.getElementById('emergencyBody');
-      if (!contacts || contacts.length === 0) {
-        body.innerHTML = '<div style="text-align:center; color:var(--text-muted);">हेल्पलाइन नंबर लोड नहीं हो सके।</div>';
-        return;
-      }
-      body.innerHTML = contacts.map(c => `
-        <div class="dict-entry" style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div class="dict-word" style="font-size:0.95rem;">${c.icon || '🚨'} ${escapeHtml(c.titleHindi)}</div>
-            <div class="dict-note">${escapeHtml(c.description || '')}</div>
-          </div>
-          <a href="tel:${c.number}" style="background:var(--pine-700); color:#fff; text-decoration:none; padding:6px 14px; border-radius:100px; font-weight:bold; font-size:0.9rem;">
-            📞 ${escapeHtml(c.number)}
-          </a>
-        </div>
-      `).join('');
-    }
-
-    async function saveApiKey() {
-      const key = document.getElementById('apiKeyInput').value.trim();
-      const feedback = document.getElementById('keyFeedback');
-      if (!key) {
-        feedback.style.color = '#ef4444';
-        feedback.textContent = 'कृपया एक मान्य Key दर्ज करें।';
-        return;
-      }
-
-      feedback.style.color = '#e2e8f0';
-      feedback.textContent = 'सत्यापित किया जा रहा है...';
-
-      try {
-        const res = await fetch('/api/set-key', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ key })
-        });
-        const data = await res.json();
-        if (data.success) {
-          feedback.style.color = '#4ade80';
-          feedback.textContent = '✓ API Key सफलतापूर्वक सुरक्षित हो गई!';
-          setTimeout(() => {
-            closeModal('keyModal');
-            checkStatus();
-          }, 1000);
-        } else {
-          feedback.style.color = '#ef4444';
-          feedback.textContent = data.error || 'अमान्य Key';
-        }
-      } catch (err) {
-        feedback.style.color = '#ef4444';
-        feedback.textContent = 'सर्वर से संपर्क करने में त्रुटि।';
-      }
-    }
-
-    // Voice sample recording
-    async function toggleVoiceRecord() {
-      const btn = document.getElementById('recordVoiceBtn');
-      const statusMsg = document.getElementById('voiceStatusMsg');
-
-      if (isRecordingVoice) {
-        // Stop recording
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-          mediaRecorder.stop();
-        }
-        isRecordingVoice = false;
-        btn.textContent = '🔴 रिकॉर्ड शुरू करें';
-        btn.style.background = '';
-      } else {
-        // Start recording
+    // Save Settings & API Key
+    saveSettingsBtn.addEventListener('click', async () => {
+      const keyVal = apiKeyInput.value.trim();
+      if (keyVal) {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          audioChunks = [];
-
-          mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) audioChunks.push(e.data);
-          };
-
-          mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-            statusMsg.textContent = 'आवाज़ विश्लेषण एवं अपलोड हो रहा है...';
-            
-            const reader = new FileReader();
-            reader.readAsDataURL(audioBlob);
-            reader.onloadend = async () => {
-              const base64Audio = reader.result;
-              try {
-                const res = await fetch('/api/voice/upload', {
-                  method: 'POST',
-                  headers: {'Content-Type': 'application/json'},
-                  body: JSON.stringify({ audioData: base64Audio, voiceName: 'kore', pitchHz: 220 })
-                });
-                const data = await res.json();
-                if (data.success) {
-                  statusMsg.style.color = '#4ade80';
-                  statusMsg.textContent = '✓ आपकी आवाज़ कैलिब्रेट हो गई!';
-                  document.getElementById('playSampleBtn').style.display = 'inline-flex';
-                } else {
-                  statusMsg.style.color = '#ef4444';
-                  statusMsg.textContent = 'अपलोड विफल रहा।';
-                }
-              } catch (e) {
-                statusMsg.style.color = '#ef4444';
-                statusMsg.textContent = 'सर्वर त्रुटि।';
-              }
-            };
-          };
-
-          mediaRecorder.start();
-          isRecordingVoice = true;
-          btn.textContent = '⏹️ रिकॉर्डिंग रोकें';
-          btn.style.background = '#ef4444';
-          statusMsg.textContent = 'बोलिए... (3 से 5 सेकंड)';
+          const res = await fetch('/api/set-key', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: keyVal })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast('Gemini API Key सुरक्षित हो गई!');
+            checkBackendStatus();
+          } else {
+            showToast('अमान्य API Key दर्ज की गई।');
+          }
         } catch (err) {
-          alert('माइक्रोफ़ोन एक्सेस नहीं मिल सका: ' + err.message);
+          showToast('API Key सुरक्षित करने में त्रुटि।');
         }
+      } else {
+        showToast('सेटिंग्स सुरक्षित कर ली गईं!');
       }
-    }
-
-    function playVoiceSample() {
-      const audio = new Audio('/api/voice/sample?t=' + Date.now());
-      audio.play();
-    }
+      settingsModal.classList.add('hidden');
+      settingsModal.classList.remove('flex');
+    });
 
     function escapeHtml(str) {
       if (!str) return '';
@@ -1642,7 +1131,15 @@ INDEX_HTML = """<!DOCTYPE html>
         .replace(/'/g, "&#039;");
     }
 
-    window.onload = init;
+    // Initialize Icons and Initial State
+    window.onload = async function() {
+      lucide.createIcons();
+      updateDialectDisplay('hindi');
+      await checkBackendStatus();
+      await loadPhrasesFromBackend();
+      await loadEmergencyFromBackend();
+      renderGlossary();
+    };
   </script>
 </body>
 </html>
