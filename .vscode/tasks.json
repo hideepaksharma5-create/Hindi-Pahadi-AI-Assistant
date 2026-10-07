@@ -1,0 +1,29 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Android APK (Assemble Debug)",
+            "type": "shell",
+            "command": "./gradlew assembleDebug || gradle assembleDebug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gradle"]
+        },
+        {
+            "label": "Run Unit & Robolectric Tests",
+            "type": "shell",
+            "command": "./gradlew testDebugUnitTest || gradle testDebugUnitTest",
+            "group": "test",
+            "problemMatcher": ["$gradle"]
+        },
+        {
+            "label": "Run Python Companion Server (app.py)",
+            "type": "shell",
+            "command": "python3 app.py",
+            "isBackground": true,
+            "problemMatcher": []
+        }
+    ]
+}
