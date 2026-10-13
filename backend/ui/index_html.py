@@ -143,10 +143,13 @@ INDEX_HTML = """<!DOCTYPE html>
 
     /* Tab transitions */
     .tab-view {
-      display: none;
+      display: none !important;
+    }
+    .tab-view:not(.active) {
+      display: none !important;
     }
     .tab-view.active {
-      display: flex;
+      display: flex !important;
     }
   </style>
 </head>
@@ -1097,9 +1100,17 @@ INDEX_HTML = """<!DOCTYPE html>
       document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         const t = btn.getAttribute('data-tab');
         if (t === tabName) {
-          btn.className = 'nav-tab-btn px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition bg-saffron-500 text-mist-950 shadow-md';
+          if (t === 'emergency') {
+            btn.className = 'nav-tab-btn px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition bg-rose-600 text-white shadow-md';
+          } else {
+            btn.className = 'nav-tab-btn px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition bg-saffron-500 text-mist-950 shadow-md';
+          }
         } else {
-          btn.className = 'nav-tab-btn px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 flex items-center gap-1.5 transition';
+          if (t === 'emergency') {
+            btn.className = 'nav-tab-btn px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-300 hover:text-rose-200 hover:bg-rose-950/40 flex items-center gap-1.5 transition';
+          } else {
+            btn.className = 'nav-tab-btn px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 flex items-center gap-1.5 transition';
+          }
         }
       });
 

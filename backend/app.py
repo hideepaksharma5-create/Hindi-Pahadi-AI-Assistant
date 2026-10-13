@@ -116,7 +116,14 @@ class PahadiServerHandler(http.server.BaseHTTPRequestHandler):
         try:
             path = self.path.split("?")[0]
             if path in ["/", "/index.html"]:
-                self._send_html(INDEX_HTML)
+                try:
+                    import importlib
+                    import backend.ui.index_html
+                    importlib.reload(backend.ui.index_html)
+                    html_content = backend.ui.index_html.INDEX_HTML
+                except Exception:
+                    html_content = INDEX_HTML
+                self._send_html(html_content)
             elif path == "/favicon.ico":
                 self.send_response(204)
                 self.end_headers()
